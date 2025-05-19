@@ -6,7 +6,7 @@
         "build": "tsc -p tsconfig.json"
     },
     "license": "MIT",
-    "description": "TypeScript client for real-time communication with Gemini Live. Designed to send audio input and receive AI responses using Google's LLM.",
+    "description": "TypeScript client for real-time communication with Gemini Live, designed to send audio input and receive AI responses using Google's LLM.",
     "keywords": [
         "gemini",
         "gemini-live",

@@ -1,7 +1,7 @@
 {
     "name": "@tw2gem/twilio-server",
     "version": "1.0.0",
-    "description": "WebSocket server for receiving real-time audio streams from Twilio calls",
+    "description": "WebSocket server for receiving real-time audio streams from Twilio calls and processing them for further use.",
     "main": "src/index.ts",
     "scripts": {},
     "keywords": [
