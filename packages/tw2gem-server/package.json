@@ -1,0 +1,35 @@
+{
+    "name": "@tw2gem/server",
+    "version": "1.0.0",
+    "main": "src/index.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.json"
+    },
+    "license": "MIT",
+    "description": "WebSocket server for receiving real-time audio streams from Twilio calls and send to Gemini Live API",
+    "keywords": [
+        "audio",
+        "pcm",
+        "mulaw",
+        "conversion",
+        "resampling",
+        "twilio",
+        "streaming",
+        "typescript",
+        "real-time",
+        "audio-utils",
+        "gemini",
+        "live",
+        "ia"
+    ],
+    "author": {
+        "name": "Sebastian Morales Lorca",
+        "email": "seba.morales.lorca@gmail.com"
+    },
+    "dependencies": {
+        "@tw2gem/twilio-server": "1.0.0",
+        "@tw2gem/audio-converter": "1.0.0",
+        "@tw2gem/gemini-live-client": "1.0.0",
+        "ws": "^8.18.2"
+    }
+}
