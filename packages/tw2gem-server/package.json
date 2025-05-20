@@ -5,6 +5,9 @@
     "scripts": {
         "build": "tsc -p tsconfig.json"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "license": "MIT",
     "description": "WebSocket server for receiving real-time audio streams from Twilio calls and sending them to the Gemini Live API for processing.",
     "keywords": [

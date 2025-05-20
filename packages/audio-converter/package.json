@@ -6,6 +6,9 @@
         "build": "tsc -p tsconfig.json"
     },
     "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
     "description": "TypeScript utilities to convert audio formats (e.g., PCM, mu-law) and resample audio for real-time streaming with Twilio or AI models.",
     "keywords": [
         "audio",
