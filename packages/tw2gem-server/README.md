@@ -27,9 +27,9 @@ For detailed usage examples and code samples, please visit our [examples reposit
 
 ## Dependencies
 
-- @tw2gem/twilio-server: 1.0.0
-- @tw2gem/audio-converter: 1.0.0
-- @tw2gem/gemini-live-client: 1.0.0
+- @tw2gem/twilio-server: 1.0.1
+- @tw2gem/audio-converter: 1.0.1
+- @tw2gem/gemini-live-client: 1.0.1
 - ws: ^8.18.2
 
 ## License

@@ -3,6 +3,9 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
+    {
+        ignores: ['**/dist/**', 'packages/*/dist/**']
+    },
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     prettier,
@@ -16,6 +19,6 @@ export default tseslint.config(
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',
-        },
+        }
     }
 ); 

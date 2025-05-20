@@ -1,6 +1,6 @@
 {
     "name": "@tw2gem/server",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "main": "src/index.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json"
@@ -32,9 +32,9 @@
         "email": "seba.morales.lorca@gmail.com"
     },
     "dependencies": {
-        "@tw2gem/twilio-server": "1.0.0",
-        "@tw2gem/audio-converter": "1.0.0",
-        "@tw2gem/gemini-live-client": "1.0.0",
+        "@tw2gem/twilio-server": "1.0.1",
+        "@tw2gem/audio-converter": "1.0.1",
+        "@tw2gem/gemini-live-client": "1.0.1",
         "ws": "^8.18.2"
     }
 }
