@@ -19,13 +19,17 @@ export interface BidiRequest {
     realtimeInput?: BidiGenerateContentRealtimeInput;
 }
 
+export interface GeminiLiveClientOptions {
+    server: GeminiServer;
+    setup: BidiGenerateContentSetup;
+}
+
 export interface GeminiServer {
     url?: string;
     apiKey?: string;
 }
 
 export interface BidiGenerateContentSetup {
-    server?: GeminiServer;
     model: string;
     generationConfig: {
         candidateCount?: number,
@@ -49,7 +53,7 @@ export interface BidiGenerateContentSetup {
     systemInstruction: {
         parts: [{ text: string }]
     };
-    tools: any[]
+    tools: object[]
 }
 
 export interface BidiGenerateContentRealtimeInput {

@@ -28,7 +28,7 @@ export class AudioConverter {
         const BIAS = 0x84;
         const CLIP = 32635;
 
-        let sign = (sample >> 8) & 0x80;
+        const sign = (sample >> 8) & 0x80;
         if (sign !== 0) sample = -sample;
         if (sample > CLIP) sample = CLIP;
 

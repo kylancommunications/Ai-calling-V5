@@ -3,15 +3,19 @@ import { TwilioConnectedEvent, TwilioDtmfEvent, TwilioEvent, TwilioMarkEvent, Tw
 
 export class TwilioWebSocketServer extends WebSocketServer {
 
+    public onOpen?: (socket: TwilioWebSocket, event: Event) => void;
+    public onError?: (socket: TwilioWebSocket, event: ErrorEvent) => void;
+    public onClose?: (socket: TwilioWebSocket, event: CloseEvent) => void;
+
     constructor(options?: TwilioServerOptions) {
         options = options || {};
         options.WebSocket = TwilioWebSocket;
         super(options);
 
         this.addListener('connection', (socket: TwilioWebSocket) => {
-            socket.onopen = (event) => { this.onOpen?.(socket, event) };
-            socket.onerror = (event) => { this.onError?.(socket, event) };
-            socket.onclose = (event) => { this.onClose?.(socket, event) };
+            socket.onopen = (event) => { this.onOpen?.(socket, event); };
+            socket.onerror = (event) => { this.onError?.(socket, event); };
+            socket.onclose = (event) => { this.onClose?.(socket, event); };
 
             socket.onmessage = (message) => {
                 try {
@@ -41,13 +45,7 @@ export class TwilioWebSocketServer extends WebSocketServer {
                 } catch (error) {
                     socket.emit('error', error);
                 }
-            }
-        })
+            };
+        });
     }
-
-    public onOpen(socket: TwilioWebSocket, event: Event) { }
-
-    public onError(socket: TwilioWebSocket, event: ErrorEvent) { }
-
-    public onClose(socket: TwilioWebSocket, event: CloseEvent) { }
 }

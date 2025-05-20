@@ -1,6 +1,5 @@
-
-import { Blob } from 'buffer';
-import { BidiGenerateContentRealtimeInput, BidiGenerateContentServerContent, BidiGenerateContentServerMessage, BidiGenerateContentSetup, BidiRequest } from './gemini-live.dto';
+import { BidiGenerateContentRealtimeInput, BidiGenerateContentServerContent, BidiGenerateContentServerMessage, BidiRequest, GeminiLiveClientOptions } from './gemini-live.dto';
+import { CloseEvent, ErrorEvent, MessageEvent, WebSocket } from 'ws';
 
 export class GeminiLiveClient {
 
@@ -9,12 +8,15 @@ export class GeminiLiveClient {
     private socket: WebSocket;
     public isReady: boolean;
 
-    constructor(
-        private setup: BidiGenerateContentSetup
-    ) {
-        const server = setup.server;
-        delete setup.server;
+    public onReady?: () => void;
+    public onError?: (event: ErrorEvent) => void;
+    public onClose?: (event: CloseEvent) => void;
+    public onServerContent?: (serverContent: BidiGenerateContentServerContent) => void;
 
+    constructor(
+        private options: GeminiLiveClientOptions
+    ) {
+        const server = options.server;
         const baseUrl = server?.url || GeminiLiveClient.DEFAULT_GEMINI_BIDI_SERVER;
         const queryParams = server?.apiKey ? `key=${server.apiKey}` : '';
 
@@ -26,41 +28,45 @@ export class GeminiLiveClient {
 
         this.socket.onerror = (event) => {
             this.isReady = false;
-            this.onError(<any> event);
+            this.onError?.(event);
         };
 
         this.socket.onclose = (event) => {
             this.isReady = false;
-            this.onClose(event);
+            this.onClose?.(event);
         };
     }
 
     protected sendSetup() {
-        const jsonPayload = JSON.stringify({ setup: this.setup });
+        const jsonPayload = JSON.stringify({ setup: this.options.setup });
         this.socket.send(jsonPayload);
     }
 
-    protected async handlerMessage(event: any) {
-        const blob = <Blob>event.data;
-        const text = await blob.text();
+    protected async handlerMessage(event: MessageEvent) {
+        const isBuffer = event.data instanceof Buffer;
+        if (!isBuffer)
+            return; 
+        
+        const blob = event.data;
+        const text = blob.toString();
         const obj: BidiGenerateContentServerMessage = JSON.parse(text);
         if (obj.setupComplete) {
             this.isReady = true;
-            return this.onReady();
+            return this.onReady?.();
         }
 
         if (obj.serverContent) {
-            return this.onServerContent(obj.serverContent);
+            return this.onServerContent?.(obj.serverContent);
         }
     };
 
     public sendText(text: string) {
         const realtimeInput: BidiGenerateContentRealtimeInput = { text };
-        this.send({ realtimeInput })
+        this.send({ realtimeInput });
     }
 
     public sendRealTime(realTimeData: BidiGenerateContentRealtimeInput) {
-        this.send({ realtimeInput: realTimeData })
+        this.send({ realtimeInput: realTimeData });
     }
 
     protected send(request: BidiRequest) {
@@ -72,13 +78,5 @@ export class GeminiLiveClient {
 
     public close() {
         this.socket.close();
-    } 
-
-    public onReady() {}
-
-    public onError(event: ErrorEvent) {}
-
-    public onClose(event: CloseEvent) {}
-
-    public onServerContent(serverContent: BidiGenerateContentServerContent) {}
+    }
 }

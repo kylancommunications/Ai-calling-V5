@@ -1,9 +1,12 @@
 import { TwilioMediaEvent, TwilioServerOptions, TwilioWebSocketServer } from '@tw2gem/twilio-server';
 import { BidiGenerateContentServerContent, GeminiLiveClient } from '@tw2gem/gemini-live-client';
-import { Tw2GemServerOptions, Tw2GemSocket } from './server.dto';
+import { Tw2GemGeminiEvents, Tw2GemServerOptions, Tw2GemSocket } from './server.dto';
 import { AudioConverter } from '@tw2gem/audio-converter';
 
 export class Tw2GemServer extends TwilioWebSocketServer {
+
+    public onNewCall?: (socket: Tw2GemSocket) => void;
+    public geminiLive = new Tw2GemGeminiEvents();
 
     constructor(options: Tw2GemServerOptions) {
         super(options.serverOptions);
@@ -15,33 +18,36 @@ export class Tw2GemServer extends TwilioWebSocketServer {
 
                 const geminiClient = new GeminiLiveClient(options.geminiOptions);
                 socket.twilioStreamSid = event.streamSid;
-                
+
                 geminiClient.onReady = () => {
                     socket.geminiClient = geminiClient;
-                    this.onGeminiReady?.(socket);
+                    this.geminiLive.onReady?.(socket);
                 };
 
                 geminiClient.onClose = () => {
                     socket.close();
-                }
+                    this.geminiLive.onClose?.(socket);
+                };
 
-                geminiClient.onServerContent = (serverContent) => { this.onServerContent?.(socket, serverContent) }
+                geminiClient.onError = (error) => {
+                    this.onError?.(socket, error);
+                };
+
+                geminiClient.onServerContent = (serverContent) => {
+                    this.onServerContent?.(socket, serverContent);
+                };
 
                 socket.onclose = (event) => {
                     if (socket?.geminiClient) {
                         socket.geminiClient.close();
                         delete socket.geminiClient;
                     }
-                    this.onClose(socket, event);
+                    this.onClose?.(socket, event);
                 };
             },
             onMedia: this.onMedia
         };
     }
-
-    public onNewCall(socket: Tw2GemSocket) {}
-
-    public onGeminiReady(socket: Tw2GemSocket) {}
 
     public onMedia(socket: Tw2GemSocket, event: TwilioMediaEvent) {
         if (!socket.geminiClient || event.media?.track !== 'inbound' || !event.media.payload)
@@ -62,7 +68,7 @@ export class Tw2GemServer extends TwilioWebSocketServer {
             return;
 
         const parts = serverContent.modelTurn?.parts;
-        
+
         const inlineData = parts.flatMap(part => part.inlineData)?.filter(item => item?.mimeType === 'audio/pcm;rate=24000' && item?.data);
         if (!inlineData?.length)
             return;

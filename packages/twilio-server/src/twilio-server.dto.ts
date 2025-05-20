@@ -4,7 +4,7 @@ export interface TwilioEvent {
     event: string;
 }
 
-export interface TwilioSequencialMessage extends TwilioEvent {
+export interface TwilioSequentialMessage extends TwilioEvent {
     sequenceNumber: number;
     streamSid: string;
 }
@@ -15,7 +15,7 @@ export interface TwilioConnectedEvent extends TwilioEvent {
     version: string;
 }
 
-export interface TwilioStartEvent extends TwilioSequencialMessage {
+export interface TwilioStartEvent extends TwilioSequentialMessage {
     event: 'start';
     start: {
         streamSid: string;
@@ -31,7 +31,7 @@ export interface TwilioStartEvent extends TwilioSequencialMessage {
     };
 }
 
-export interface TwilioMediaEvent extends TwilioSequencialMessage {
+export interface TwilioMediaEvent extends TwilioSequentialMessage {
     event: 'media';
     media: {
         track: 'inbound' | 'outbound';
@@ -48,7 +48,7 @@ export interface TwilioSendMedia {
     }
 }
 
-export interface TwilioStopEvent extends TwilioSequencialMessage {
+export interface TwilioStopEvent extends TwilioSequentialMessage {
     event: 'stop';
     stop: {
         accountSid: string;
@@ -56,7 +56,7 @@ export interface TwilioStopEvent extends TwilioSequencialMessage {
     }
 }
 
-export interface TwilioDtmfEvent extends TwilioSequencialMessage {
+export interface TwilioDtmfEvent extends TwilioSequentialMessage {
     event: 'dtmf';
     dtmf: {
         track: string;
@@ -64,7 +64,7 @@ export interface TwilioDtmfEvent extends TwilioSequencialMessage {
     }
 }
 
-export interface TwilioMarkEvent extends TwilioSequencialMessage {
+export interface TwilioMarkEvent extends TwilioSequentialMessage {
     event: 'mark';
     mark: {
         name: string;
@@ -72,12 +72,12 @@ export interface TwilioMarkEvent extends TwilioSequencialMessage {
 }
 
 export interface TwilioMessageHandlers {
-    onConnected?: (socket: TwilioWebSocket, event: TwilioConnectedEvent) => any;
-    onStart?: (socket: TwilioWebSocket, event: TwilioStartEvent) => any;
-    onMedia?: (socket: TwilioWebSocket, event: TwilioMediaEvent) => any;
-    onStop?: (socket: TwilioWebSocket, event: TwilioStopEvent) => any;
-    onDtmf?: (socket: TwilioWebSocket, event: TwilioDtmfEvent) => any;
-    onMark?: (socket: TwilioWebSocket, event: TwilioMarkEvent) => any;
+    onConnected?: (socket: TwilioWebSocket, event: TwilioConnectedEvent) => void;
+    onStart?: (socket: TwilioWebSocket, event: TwilioStartEvent) => void;
+    onMedia?: (socket: TwilioWebSocket, event: TwilioMediaEvent) => void;
+    onStop?: (socket: TwilioWebSocket, event: TwilioStopEvent) => void;
+    onDtmf?: (socket: TwilioWebSocket, event: TwilioDtmfEvent) => void;
+    onMark?: (socket: TwilioWebSocket, event: TwilioMarkEvent) => void;
 }
 
 export interface TwilioServerOptions extends ServerOptions {
