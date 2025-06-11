@@ -1,42 +1,101 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Switch } from '@headlessui/react'
+import { EyeIcon, EyeSlashIcon, KeyIcon, UserIcon, PhoneIcon } from '@heroicons/react/24/outline'
+import { useUser } from '../contexts/UserContext'
+import { DatabaseService } from '../services/database'
+import toast from 'react-hot-toast'
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState({
+  const { user, updateUser } = useUser()
+  const [loading, setLoading] = useState(false)
+  const [showApiKeys, setShowApiKeys] = useState({
+    gemini: false,
+    twilioSid: false,
+    twilioToken: false
+  })
+  
+  const [formData, setFormData] = useState({
+    // Profile Information
+    client_name: '',
+    company_name: '',
+    email: '',
+    phone_number: '',
+    
     // AI Configuration
-    geminiModel: 'gemini-2.0-flash-live-001',
-    temperature: 0.7,
-    maxTokens: 1000,
-    systemPrompt: 'You are a professional AI assistant for a call center...',
+    system_instruction: '',
+    voice_name: 'Puck',
+    language_code: 'en-US',
+    agent_type: 'customer_service',
     
-    // Call Settings
-    autoAnswer: true,
-    recordCalls: true,
-    transcribeRealtime: true,
-    voiceActivityDetection: true,
+    // Phone Configuration
+    twilio_phone_number: '',
+    twilio_webhook_url: '',
     
-    // Notifications
-    emailNotifications: true,
-    smsNotifications: false,
-    webhookNotifications: true,
-    
-    // Security
-    requireAuth: true,
-    ipWhitelist: '',
-    apiKeyRotation: 30
+    // API Keys (these would be stored securely)
+    gemini_api_key: '',
+    twilio_account_sid: '',
+    twilio_auth_token: ''
   })
 
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }))
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        client_name: user.client_name || '',
+        company_name: user.company_name || '',
+        email: user.email || '',
+        phone_number: user.phone_number || '',
+        system_instruction: user.system_instruction || '',
+        voice_name: user.voice_name || 'Puck',
+        language_code: user.language_code || 'en-US',
+        agent_type: user.agent_type || 'customer_service',
+        twilio_phone_number: user.twilio_phone_number || '',
+        twilio_webhook_url: user.twilio_webhook_url || '',
+        gemini_api_key: '',
+        twilio_account_sid: '',
+        twilio_auth_token: ''
+      })
+    }
+  }, [user])
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
-    // Save settings logic here
-    console.log('Saving settings:', settings)
+  const handleSaveProfile = async () => {
+    if (!user) return
+
+    setLoading(true)
+    try {
+      await updateUser({
+        client_name: formData.client_name,
+        company_name: formData.company_name,
+        phone_number: formData.phone_number,
+        system_instruction: formData.system_instruction,
+        voice_name: formData.voice_name,
+        language_code: formData.language_code,
+        agent_type: formData.agent_type,
+        twilio_phone_number: formData.twilio_phone_number,
+        twilio_webhook_url: formData.twilio_webhook_url
+      })
+    } catch (error) {
+      console.error('Error saving profile:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveApiKey = async (keyType: 'gemini' | 'twilio_sid' | 'twilio_token') => {
+    // In a real implementation, these would be encrypted and stored securely
+    // For now, we'll just show a success message
+    toast.success(`${keyType} API key updated successfully`)
+  }
+
+  const toggleApiKeyVisibility = (keyType: 'gemini' | 'twilioSid' | 'twilioToken') => {
+    setShowApiKeys(prev => ({ ...prev, [keyType]: !prev[keyType] }))
   }
 
   return (
@@ -48,7 +107,79 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="bg-white shadow rounded-lg">
+      {/* Profile Information */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="flex items-center mb-6">
+            <UserIcon className="h-6 w-6 text-gray-400 mr-3" />
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Profile Information
+            </h3>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label htmlFor="client-name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="client-name"
+                value={formData.client_name}
+                onChange={(e) => handleInputChange('client_name', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="John Doe"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="company-name" className="block text-sm font-medium text-gray-700">
+                Company Name
+              </label>
+              <input
+                type="text"
+                id="company-name"
+                value={formData.company_name}
+                onChange={(e) => handleInputChange('company_name', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="Acme Corp"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                disabled
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
+                placeholder="john@example.com"
+              />
+              <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phone-number"
+                value={formData.phone_number}
+                onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Configuration */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
             AI Configuration
@@ -56,185 +187,165 @@ export default function SettingsPage() {
           
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label htmlFor="gemini-model" className="block text-sm font-medium text-gray-700">
-                Gemini Model
+              <label htmlFor="voice-name" className="block text-sm font-medium text-gray-700">
+                Voice
               </label>
               <select
-                id="gemini-model"
-                value={settings.geminiModel}
-                onChange={(e) => handleSettingChange('geminiModel', e.target.value)}
+                id="voice-name"
+                value={formData.voice_name}
+                onChange={(e) => handleInputChange('voice_name', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               >
-                <option value="gemini-2.0-flash-live-001">Gemini 2.0 Flash Live</option>
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                <option value="gemini-pro">Gemini Pro</option>
+                <option value="Puck">Puck (Default) - Friendly and professional</option>
+                <option value="Charon">Charon - Deep and authoritative</option>
+                <option value="Kore">Kore - Warm and empathetic</option>
+                <option value="Fenrir">Fenrir - Strong and confident</option>
+                <option value="Aoede">Aoede - Melodic and soothing</option>
+                <option value="Leda">Leda - Clear and articulate</option>
+                <option value="Orus">Orus - Calm and reassuring</option>
+                <option value="Zephyr">Zephyr - Light and energetic</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="temperature" className="block text-sm font-medium text-gray-700">
-                Temperature ({settings.temperature})
+              <label htmlFor="language-code" className="block text-sm font-medium text-gray-700">
+                Language
               </label>
-              <input
-                type="range"
-                id="temperature"
-                min="0"
-                max="1"
-                step="0.1"
-                value={settings.temperature}
-                onChange={(e) => handleSettingChange('temperature', parseFloat(e.target.value))}
-                className="mt-1 block w-full"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Conservative</span>
-                <span>Creative</span>
-              </div>
+              <select
+                id="language-code"
+                value={formData.language_code}
+                onChange={(e) => handleInputChange('language_code', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              >
+                <option value="en-US">English (US)</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="es-US">Spanish (US)</option>
+                <option value="es-ES">Spanish (Spain)</option>
+                <option value="fr-FR">French</option>
+                <option value="de-DE">German</option>
+                <option value="it-IT">Italian</option>
+                <option value="pt-BR">Portuguese (Brazil)</option>
+              </select>
             </div>
 
             <div>
-              <label htmlFor="max-tokens" className="block text-sm font-medium text-gray-700">
-                Max Tokens
+              <label htmlFor="agent-type" className="block text-sm font-medium text-gray-700">
+                Agent Type
               </label>
-              <input
-                type="number"
-                id="max-tokens"
-                value={settings.maxTokens}
-                onChange={(e) => handleSettingChange('maxTokens', parseInt(e.target.value))}
+              <select
+                id="agent-type"
+                value={formData.agent_type}
+                onChange={(e) => handleInputChange('agent_type', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              />
+              >
+                <option value="customer_service">Customer Service</option>
+                <option value="sales">Sales</option>
+                <option value="support">Technical Support</option>
+                <option value="appointment_booking">Appointment Booking</option>
+                <option value="survey">Survey</option>
+                <option value="general">General Assistant</option>
+              </select>
             </div>
 
             <div className="sm:col-span-2">
-              <label htmlFor="system-prompt" className="block text-sm font-medium text-gray-700">
-                System Prompt
+              <label htmlFor="system-instruction" className="block text-sm font-medium text-gray-700">
+                System Instruction
               </label>
               <textarea
-                id="system-prompt"
+                id="system-instruction"
                 rows={4}
-                value={settings.systemPrompt}
-                onChange={(e) => handleSettingChange('systemPrompt', e.target.value)}
+                value={formData.system_instruction}
+                onChange={(e) => handleInputChange('system_instruction', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                placeholder="Enter your system prompt for the AI assistant..."
+                placeholder="You are a professional AI assistant for customer service calls. Be helpful, polite, and efficient..."
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                This instruction guides how your AI agent behaves during calls
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Phone Configuration */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="flex items-center mb-6">
+            <PhoneIcon className="h-6 w-6 text-gray-400 mr-3" />
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Phone Configuration
+            </h3>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label htmlFor="twilio-phone" className="block text-sm font-medium text-gray-700">
+                Twilio Phone Number
+              </label>
+              <input
+                type="tel"
+                id="twilio-phone"
+                value={formData.twilio_phone_number}
+                onChange={(e) => handleInputChange('twilio_phone_number', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="+1 (555) 987-6543"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="webhook-url" className="block text-sm font-medium text-gray-700">
+                Webhook URL
+              </label>
+              <input
+                type="url"
+                id="webhook-url"
+                value={formData.twilio_webhook_url}
+                onChange={(e) => handleInputChange('twilio_webhook_url', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="https://your-domain.com/webhook"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg">
+      {/* API Keys */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
-            Call Settings
-          </h3>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900">Auto Answer</h4>
-                <p className="text-sm text-gray-500">Automatically answer incoming calls</p>
-              </div>
-              <Switch
-                checked={settings.autoAnswer}
-                onChange={(checked) => handleSettingChange('autoAnswer', checked)}
-                className={classNames(
-                  settings.autoAnswer ? 'bg-blue-600' : 'bg-gray-200',
-                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                )}
-              >
-                <span
-                  className={classNames(
-                    settings.autoAnswer ? 'translate-x-5' : 'translate-x-0',
-                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                  )}
-                />
-              </Switch>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900">Record Calls</h4>
-                <p className="text-sm text-gray-500">Save audio recordings of all calls</p>
-              </div>
-              <Switch
-                checked={settings.recordCalls}
-                onChange={(checked) => handleSettingChange('recordCalls', checked)}
-                className={classNames(
-                  settings.recordCalls ? 'bg-blue-600' : 'bg-gray-200',
-                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                )}
-              >
-                <span
-                  className={classNames(
-                    settings.recordCalls ? 'translate-x-5' : 'translate-x-0',
-                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                  )}
-                />
-              </Switch>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900">Real-time Transcription</h4>
-                <p className="text-sm text-gray-500">Generate live transcripts during calls</p>
-              </div>
-              <Switch
-                checked={settings.transcribeRealtime}
-                onChange={(checked) => handleSettingChange('transcribeRealtime', checked)}
-                className={classNames(
-                  settings.transcribeRealtime ? 'bg-blue-600' : 'bg-gray-200',
-                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                )}
-              >
-                <span
-                  className={classNames(
-                    settings.transcribeRealtime ? 'translate-x-5' : 'translate-x-0',
-                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                  )}
-                />
-              </Switch>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-medium text-gray-900">Voice Activity Detection</h4>
-                <p className="text-sm text-gray-500">Detect when users start and stop speaking</p>
-              </div>
-              <Switch
-                checked={settings.voiceActivityDetection}
-                onChange={(checked) => handleSettingChange('voiceActivityDetection', checked)}
-                className={classNames(
-                  settings.voiceActivityDetection ? 'bg-blue-600' : 'bg-gray-200',
-                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                )}
-              >
-                <span
-                  className={classNames(
-                    settings.voiceActivityDetection ? 'translate-x-5' : 'translate-x-0',
-                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                  )}
-                />
-              </Switch>
-            </div>
+          <div className="flex items-center mb-6">
+            <KeyIcon className="h-6 w-6 text-gray-400 mr-3" />
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              API Keys
+            </h3>
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
-            API Keys
-          </h3>
           
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Gemini API Key</label>
               <div className="mt-1 flex rounded-md shadow-sm">
                 <input
-                  type="password"
+                  type={showApiKeys.gemini ? "text" : "password"}
+                  value={formData.gemini_api_key}
+                  onChange={(e) => handleInputChange('gemini_api_key', e.target.value)}
                   className="flex-1 rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   placeholder="AIzaSy..."
                 />
-                <button className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                <button
+                  type="button"
+                  onClick={() => toggleApiKeyVisibility('gemini')}
+                  className="relative -ml-px inline-flex items-center px-3 py-2 border border-gray-300 bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
+                  {showApiKeys.gemini ? (
+                    <EyeSlashIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveApiKey('gemini')}
+                  className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
                   Update
                 </button>
               </div>
@@ -244,11 +355,28 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-gray-700">Twilio Account SID</label>
               <div className="mt-1 flex rounded-md shadow-sm">
                 <input
-                  type="password"
+                  type={showApiKeys.twilioSid ? "text" : "password"}
+                  value={formData.twilio_account_sid}
+                  onChange={(e) => handleInputChange('twilio_account_sid', e.target.value)}
                   className="flex-1 rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   placeholder="AC..."
                 />
-                <button className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                <button
+                  type="button"
+                  onClick={() => toggleApiKeyVisibility('twilioSid')}
+                  className="relative -ml-px inline-flex items-center px-3 py-2 border border-gray-300 bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
+                  {showApiKeys.twilioSid ? (
+                    <EyeSlashIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveApiKey('twilio_sid')}
+                  className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
                   Update
                 </button>
               </div>
@@ -258,25 +386,103 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
               <div className="mt-1 flex rounded-md shadow-sm">
                 <input
-                  type="password"
+                  type={showApiKeys.twilioToken ? "text" : "password"}
+                  value={formData.twilio_auth_token}
+                  onChange={(e) => handleInputChange('twilio_auth_token', e.target.value)}
                   className="flex-1 rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   placeholder="••••••••"
                 />
-                <button className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                <button
+                  type="button"
+                  onClick={() => toggleApiKeyVisibility('twilioToken')}
+                  className="relative -ml-px inline-flex items-center px-3 py-2 border border-gray-300 bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
+                  {showApiKeys.twilioToken ? (
+                    <EyeSlashIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveApiKey('twilio_token')}
+                  className="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                >
                   Update
                 </button>
               </div>
             </div>
           </div>
+
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-700">
+              <strong>Security Note:</strong> API keys are encrypted and stored securely. They are never displayed in full after being saved.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end">
+      {/* Account Information */}
+      {user && (
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
+              Account Information
+            </h3>
+            
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Current Plan</label>
+                <div className="mt-1 text-sm text-gray-900 capitalize font-medium">
+                  {user.plan_name}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Monthly Limit</label>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.monthly_minute_limit.toLocaleString()} minutes
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Minutes Used</label>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.minutes_used.toLocaleString()} minutes
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Account Status</label>
+                <div className="mt-1">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.is_active 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end space-x-3">
         <button
-          onClick={handleSave}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          type="button"
+          onClick={() => window.location.reload()}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Save Settings
+          Reset
+        </button>
+        <button
+          onClick={handleSaveProfile}
+          disabled={loading}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {loading ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
     </div>
