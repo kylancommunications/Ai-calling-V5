@@ -131,3 +131,90 @@ export interface AnalyticsData {
     leadsContacted: number
   }
 }
+
+export interface DNCEntry {
+  id: string
+  profile_id: string
+  phone_number: string
+  added_date: string
+  source: 'customer_request' | 'legal_requirement' | 'manual' | 'complaint'
+  notes?: string
+  expiry_date?: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface WebhookEndpoint {
+  id: string
+  profile_id: string
+  name: string
+  url: string
+  events: string[]
+  is_active: boolean
+  secret_key?: string
+  retry_attempts: number
+  last_triggered_at?: string
+  success_count: number
+  failure_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookDelivery {
+  id: string
+  webhook_id: string
+  event_type: string
+  payload: Record<string, any>
+  response_status?: number
+  response_body?: string
+  delivered_at: string
+  success: boolean
+}
+
+export interface Subscription {
+  id: string
+  profile_id: string
+  stripe_customer_id?: string
+  stripe_subscription_id?: string
+  plan_name: string
+  status: 'active' | 'canceled' | 'past_due' | 'unpaid'
+  current_period_start?: string
+  current_period_end?: string
+  cancel_at_period_end: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface UsageRecord {
+  id: string
+  profile_id: string
+  subscription_id?: string
+  usage_type: 'minutes' | 'calls' | 'agents'
+  quantity: number
+  unit_price?: number
+  total_cost?: number
+  billing_period_start: string
+  billing_period_end: string
+  created_at: string
+}
+
+export interface ComplianceReport {
+  id: string
+  profile_id: string
+  report_type: 'dnc_compliance' | 'tcpa_compliance' | 'call_recording_consent'
+  report_period_start: string
+  report_period_end: string
+  report_data: Record<string, any>
+  generated_at: string
+  generated_by?: string
+}
+
+export interface SystemStatus {
+  id: string
+  service_name: 'api' | 'calls' | 'webhooks' | 'database' | 'ai' | 'analytics'
+  status: 'operational' | 'degraded' | 'outage'
+  message?: string
+  started_at: string
+  resolved_at?: string
+  created_at: string
+}

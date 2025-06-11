@@ -1,270 +1,367 @@
 import { useState, useEffect } from 'react'
-import { PhoneIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { supabase, type AnalyticsData } from '../lib/supabase'
+import { 
+  PhoneIcon, 
+  UserGroupIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  PlayIcon,
+  StopIcon,
+  ChartBarIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline'
+import { useUser, usePermissions } from '../contexts/UserContext'
+import { DatabaseService } from '../services/database'
+import { RealtimeService } from '../services/realtime'
+import UsageTracker from '../components/UsageTracker'
+import type { CallLog, AnalyticsData } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
-
 export default function DashboardPage() {
+  const { user } = useUser()
+  const { canUseInbound } = usePermissions()
+  const [recentCalls, setRecentCalls] = useState<CallLog[]>([])
+  const [activeCalls, setActiveCalls] = useState<CallLog[]>([])
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState(30)
+  const [serverStatus, setServerStatus] = useState<'running' | 'stopped'>('stopped')
 
   useEffect(() => {
-    fetchAnalytics()
-  }, [timeRange])
+    if (user) {
+      loadDashboardData()
+      setupRealtimeSubscriptions()
+    }
+  }, [user])
 
-  const fetchAnalytics = async () => {
+  const loadDashboardData = async () => {
+    if (!user) return
+
     try {
       setLoading(true)
-      const { data, error } = await supabase.functions.invoke('get-analytics', {
-        body: { days: timeRange }
-      })
+      
+      // Load recent calls
+      const calls = await DatabaseService.getCallLogs(user.id, 10)
+      setRecentCalls(calls)
 
-      if (error) throw error
-      setAnalytics(data)
+      // Load active calls
+      const active = await DatabaseService.getActiveCallLogs(user.id)
+      setActiveCalls(active)
+
+      // Load analytics
+      const analyticsData = await DatabaseService.getAnalytics(user.id)
+      setAnalytics(analyticsData)
+
+      // Simulate server status based on active calls
+      setServerStatus(active.length > 0 ? 'running' : 'stopped')
     } catch (error) {
-      console.error('Error fetching analytics:', error)
-      toast.error('Failed to load analytics data')
+      console.error('Error loading dashboard data:', error)
+      toast.error('Failed to load dashboard data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const setupRealtimeSubscriptions = () => {
+    if (!user) return
+
+    // Subscribe to call updates
+    const callSubscription = RealtimeService.subscribeToCallUpdates(
+      user.id,
+      (updatedCall) => {
+        // Update recent calls
+        setRecentCalls(prev => 
+          prev.map(call => call.id === updatedCall.id ? updatedCall : call)
+        )
+        
+        // Update active calls
+        if (updatedCall.status === 'in_progress') {
+          setActiveCalls(prev => {
+            const exists = prev.find(call => call.id === updatedCall.id)
+            if (exists) {
+              return prev.map(call => call.id === updatedCall.id ? updatedCall : call)
+            } else {
+              return [...prev, updatedCall]
+            }
+          })
+        } else {
+          setActiveCalls(prev => prev.filter(call => call.id !== updatedCall.id))
+        }
+      },
+      (newCall) => {
+        // Add new call to recent calls
+        setRecentCalls(prev => [newCall, ...prev.slice(0, 9)])
+        
+        // Add to active calls if in progress
+        if (newCall.status === 'in_progress') {
+          setActiveCalls(prev => [newCall, ...prev])
+        }
+      },
+      (callId) => {
+        // Remove deleted call
+        setRecentCalls(prev => prev.filter(call => call.id !== callId))
+        setActiveCalls(prev => prev.filter(call => call.id !== callId))
+      }
+    )
+
+    // Cleanup on unmount
+    return () => {
+      RealtimeService.unsubscribe(callSubscription)
+    }
+  }
+
+  const toggleServer = () => {
+    // This would typically make an API call to start/stop the server
+    const newStatus = serverStatus === 'running' ? 'stopped' : 'running'
+    setServerStatus(newStatus)
+    
+    if (newStatus === 'running') {
+      toast.success('AI server started successfully')
+    } else {
+      toast.success('AI server stopped')
+    }
+  }
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}m ${remainingSeconds}s`
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `${diffInHours}h ago`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    return `${diffInDays}d ago`
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800'
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800'
+      case 'failed':
+        return 'bg-red-100 text-red-800'
+      case 'abandoned':
+        return 'bg-yellow-100 text-yellow-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircleIcon className="h-3 w-3 mr-1" />
+      case 'in_progress':
+        return <PlayIcon className="h-3 w-3 mr-1" />
+      case 'failed':
+        return <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+      default:
+        return null
     }
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  if (!analytics) {
-    return (
-      <div className="text-center py-12">
-        <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No data available</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Analytics data could not be loaded.
-        </p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     )
   }
 
   const stats = [
-    {
-      name: 'Total Calls',
-      value: analytics.totalCalls.toLocaleString(),
-      icon: PhoneIcon,
-      change: '+12%',
-      changeType: 'positive' as const,
+    { 
+      name: 'Active Calls', 
+      value: activeCalls.length.toString(), 
+      icon: PhoneIcon, 
+      color: 'text-green-500' 
     },
-    {
-      name: 'Total Minutes',
-      value: analytics.totalMinutes.toLocaleString(),
-      icon: ClockIcon,
-      change: '+8%',
-      changeType: 'positive' as const,
+    { 
+      name: 'Total Calls Today', 
+      value: analytics?.totalCalls.toString() || '0', 
+      icon: UserGroupIcon, 
+      color: 'text-blue-500' 
     },
-    {
-      name: 'Success Rate',
-      value: analytics.totalCalls > 0 ? `${Math.round((analytics.successfulCalls / analytics.totalCalls) * 100)}%` : '0%',
-      icon: CheckCircleIcon,
-      change: '+2%',
-      changeType: 'positive' as const,
+    { 
+      name: 'Success Rate', 
+      value: analytics ? `${Math.round((analytics.successfulCalls / Math.max(analytics.totalCalls, 1)) * 100)}%` : '0%', 
+      icon: CheckCircleIcon, 
+      color: 'text-emerald-500' 
     },
-    {
-      name: 'Minutes Used',
-      value: `${analytics.minutesUsed}/${analytics.minutesLimit}`,
-      icon: ClockIcon,
-      change: `${Math.round((analytics.minutesUsed / analytics.minutesLimit) * 100)}%`,
-      changeType: analytics.minutesUsed / analytics.minutesLimit > 0.8 ? 'negative' as const : 'neutral' as const,
+    { 
+      name: 'Avg Duration', 
+      value: analytics ? formatDuration(Math.round(analytics.averageCallDuration)) : '0m 0s', 
+      icon: ClockIcon, 
+      color: 'text-purple-500' 
     },
   ]
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-            Dashboard
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Overview of your AI call center performance
-          </p>
-        </div>
-        <div className="mt-4 flex md:ml-4 md:mt-0">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(Number(e.target.value))}
-            className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-          </select>
+      {/* Server Control */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">AI Server Control</h3>
+            <p className="text-slate-600">Manage your AI calling server</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className={`h-3 w-3 rounded-full ${serverStatus === 'running' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-sm text-slate-600">
+                {serverStatus === 'running' ? 'Running' : 'Stopped'}
+              </span>
+            </div>
+            <button
+              onClick={toggleServer}
+              className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                serverStatus === 'running'
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              {serverStatus === 'running' ? (
+                <>
+                  <StopIcon className="h-5 w-5" />
+                  <span>Stop Server</span>
+                </>
+              ) : (
+                <>
+                  <PlayIcon className="h-5 w-5" />
+                  <span>Start Server</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
-          <div key={stat.name} className="card">
+          <div key={stat.name} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <stat.icon className="h-6 w-6 text-gray-400" aria-hidden="true" />
+                <stat.icon className={`h-8 w-8 ${stat.color}`} />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">{stat.value}</div>
-                    <div
-                      className={`ml-2 flex items-baseline text-sm font-semibold ${
-                        stat.changeType === 'positive'
-                          ? 'text-green-600'
-                          : stat.changeType === 'negative'
-                          ? 'text-red-600'
-                          : 'text-gray-500'
-                      }`}
-                    >
-                      {stat.change}
-                    </div>
-                  </dd>
-                </dl>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-slate-600">{stat.name}</p>
+                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Calls Over Time */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Calls Over Time</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics.callsByDay}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                />
-                <YAxis />
-                <Tooltip 
-                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2}
-                  dot={{ fill: '#3B82F6' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Usage Tracker */}
+      <UsageTracker />
 
-        {/* Call Status Distribution */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Call Status Distribution</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={analytics.callsByStatus}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ status, count }) => `${status}: ${count}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {analytics.callsByStatus.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Campaign Stats & Top Outcomes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Campaign Statistics */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Campaign Statistics</h3>
+      {/* Active Calls */}
+      {canUseInbound && activeCalls.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Active Calls</h3>
           <div className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Total Campaigns</span>
-              <span className="text-sm font-medium text-gray-900">
-                {analytics.campaignStats.totalCampaigns}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Active Campaigns</span>
-              <span className="text-sm font-medium text-gray-900">
-                {analytics.campaignStats.activeCampaigns}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Total Leads</span>
-              <span className="text-sm font-medium text-gray-900">
-                {analytics.campaignStats.totalLeads.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Leads Contacted</span>
-              <span className="text-sm font-medium text-gray-900">
-                {analytics.campaignStats.leadsContacted.toLocaleString()}
-              </span>
-            </div>
-            <div className="pt-2 border-t">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-900">Contact Rate</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {analytics.campaignStats.totalLeads > 0
-                    ? `${Math.round((analytics.campaignStats.leadsContacted / analytics.campaignStats.totalLeads) * 100)}%`
-                    : '0%'
-                  }
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Outcomes */}
-        <div className="card">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Top Call Outcomes</h3>
-          <div className="space-y-3">
-            {analytics.topOutcomes.length > 0 ? (
-              analytics.topOutcomes.map((outcome, index) => (
-                <div key={outcome.outcome} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-3"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span className="text-sm text-gray-900 capitalize">
-                      {outcome.outcome.replace(/_/g, ' ')}
+            {activeCalls.map((call) => (
+              <div key={call.id} className="border border-slate-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-slate-900">{call.phone_number_from}</p>
+                    <p className="text-sm text-slate-500">
+                      Duration: {formatDuration(call.duration_seconds)}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {call.call_summary || 'Call in progress...'}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <PlayIcon className="h-3 w-3 mr-1" />
+                      Active
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    {outcome.count}
-                  </span>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">No outcomes recorded yet</p>
-            )}
+              </div>
+            ))}
           </div>
+        </div>
+      )}
+
+      {/* Recent Calls */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-slate-900">Recent Calls</h3>
+          <ChartBarIcon className="h-5 w-5 text-slate-400" />
+        </div>
+        <div className="overflow-hidden">
+          {recentCalls.length > 0 ? (
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Phone Number
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Direction
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Summary
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Time
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {recentCalls.map((call) => (
+                  <tr key={call.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                      {call.direction === 'inbound' ? call.phone_number_from : call.phone_number_to}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">
+                      {call.direction}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(call.status)}`}>
+                        {getStatusIcon(call.status)}
+                        {call.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {formatDuration(call.duration_seconds)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">
+                      {call.call_summary || call.outcome || 'No summary available'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {formatTimeAgo(call.started_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center py-12">
+              <PhoneIcon className="mx-auto h-12 w-12 text-slate-400" />
+              <h3 className="mt-2 text-sm font-medium text-slate-900">No calls yet</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Start your AI server to begin receiving calls.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

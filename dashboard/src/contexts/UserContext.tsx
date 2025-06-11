@@ -1,21 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { Profile } from '../lib/supabase'
+import { DatabaseService } from '../services/database'
+import { useAuth } from '../hooks/useAuth'
+import toast from 'react-hot-toast'
 
 interface UserContextType {
   user: Profile | null
   loading: boolean
-  updateUser: (updates: Partial<Profile>) => void
+  updateUser: (updates: Partial<Profile>) => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
-// Mock user data for demo
-const mockUser: Profile = {
+// Demo user data for fallback
+const demoUser: Profile = {
   id: 'demo-user-1',
   user_id: 'demo-user-1',
   client_name: 'Demo User',
   company_name: 'AI Call Center Demo',
-  email: 'demo@callcenter.ai',
+  email: 'demo@example.com',
   phone_number: '+1 (555) 123-4567',
   plan_name: 'professional',
   monthly_minute_limit: 1000,
@@ -28,7 +32,6 @@ const mockUser: Profile = {
   twilio_webhook_url: 'https://demo.callcenter.ai/webhook',
   is_active: true,
   subscription_ends_at: '2024-12-31T23:59:59Z',
-  // Feature gating - Professional plan permissions (restored)
   can_use_inbound: true,
   can_use_outbound_dialer: true,
   max_agent_configurations: 3,
@@ -39,23 +42,87 @@ const mockUser: Profile = {
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const { user: authUser } = useAuth()
 
-  useEffect(() => {
-    // Simulate loading user data
-    setTimeout(() => {
-      setUser(mockUser)
+  const loadUser = async () => {
+    if (!authUser) {
+      setUser(null)
       setLoading(false)
-    }, 500)
-  }, [])
+      return
+    }
 
-  const updateUser = (updates: Partial<Profile>) => {
-    if (user) {
-      setUser({ ...user, ...updates })
+    try {
+      setLoading(true)
+      
+      // Check if we're in demo mode
+      if (authUser.email === 'demo@example.com') {
+        setUser(demoUser)
+        setLoading(false)
+        return
+      }
+
+      const profile = await DatabaseService.getProfile(authUser.id)
+      
+      if (profile) {
+        setUser(profile)
+      } else {
+        // Profile doesn't exist, this shouldn't happen with the trigger
+        // but let's handle it gracefully
+        console.warn('Profile not found for user:', authUser.id)
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error)
+      // Fallback to demo user in case of error
+      if (authUser.email === 'demo@example.com') {
+        setUser(demoUser)
+      } else {
+        toast.error('Failed to load user profile')
+        setUser(null)
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
+  useEffect(() => {
+    loadUser()
+  }, [authUser])
+
+  const updateUser = async (updates: Partial<Profile>) => {
+    if (!user || !authUser) {
+      toast.error('No user to update')
+      return
+    }
+
+    try {
+      // For demo user, just update locally
+      if (authUser.email === 'demo@example.com') {
+        setUser({ ...user, ...updates })
+        toast.success('Profile updated successfully')
+        return
+      }
+
+      const updatedProfile = await DatabaseService.updateProfile(authUser.id, updates)
+      
+      if (updatedProfile) {
+        setUser(updatedProfile)
+        toast.success('Profile updated successfully')
+      } else {
+        toast.error('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Error updating user profile:', error)
+      toast.error('Failed to update profile')
+    }
+  }
+
+  const refreshUser = async () => {
+    await loadUser()
+  }
+
   return (
-    <UserContext.Provider value={{ user, loading, updateUser }}>
+    <UserContext.Provider value={{ user, loading, updateUser, refreshUser }}>
       {children}
     </UserContext.Provider>
   )

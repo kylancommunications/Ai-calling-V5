@@ -9,15 +9,25 @@ import {
   XMarkIcon,
   HomeIcon,
   UserCircleIcon,
+  UserGroupIcon,
+  CalendarIcon,
+  ShieldExclamationIcon,
+  LinkIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useLocation } from 'react-router-dom'
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+  { name: 'AI Agents', href: '/agents', icon: UserGroupIcon },
   { name: 'Call History', href: '/calls', icon: PhoneIcon },
+  { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Campaigns', href: '/campaigns', icon: MegaphoneIcon },
+  { name: 'DNC List', href: '/dnc', icon: ShieldExclamationIcon },
+  { name: 'Webhooks', href: '/webhooks', icon: LinkIcon },
+  { name: 'Billing', href: '/billing', icon: CreditCardIcon },
   { name: 'Settings', href: '/settings', icon: CogIcon },
 ]
 
