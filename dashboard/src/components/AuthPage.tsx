@@ -11,19 +11,19 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
   const [loading, setLoading] = useState(false)
 
   const handleLogin = () => {
-    if (email === 'demo@tw2gem.com' && password === 'demo123') {
+    if (email === 'demo@callcenter.ai' && password === 'demo123') {
       setLoading(true)
       setTimeout(() => {
         onLogin()
         setLoading(false)
       }, 1000)
     } else {
-      alert('Invalid credentials. Use demo@tw2gem.com / demo123')
+      alert('Invalid credentials. Use demo@callcenter.ai / demo123')
     }
   }
 
   const handleDemoLogin = () => {
-    setEmail('demo@tw2gem.com')
+    setEmail('demo@callcenter.ai')
     setPassword('demo123')
     setTimeout(() => handleLogin(), 100)
   }
@@ -40,13 +40,13 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">
-            TW2GEM
+            AI CALL CENTER
           </h1>
           <p className="text-xl text-blue-200 mb-2">
-            AI Calling Platform
+            Intelligent Calling Platform
           </p>
           <p className="text-sm text-slate-300">
-            Twilio + Gemini Live Integration
+            Advanced AI-Powered Communications
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
                 Try Demo Account
               </button>
               <p className="mt-3 text-xs text-slate-300 text-center">
-                Email: demo@tw2gem.com • Password: demo123
+                Email: demo@callcenter.ai • Password: demo123
               </p>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
             </div>
           </div>
           <p className="text-xs text-slate-400">
-            Powered by Twilio & Google Gemini Live
+            Enterprise-Grade AI Communications
           </p>
         </div>
       </div>

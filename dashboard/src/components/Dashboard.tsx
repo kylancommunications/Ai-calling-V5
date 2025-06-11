@@ -52,7 +52,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <MicrophoneIcon className="h-4 w-4 text-white" />
                 </div>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">TW2GEM Dashboard</h1>
+              <h1 className="text-2xl font-bold text-slate-900">AI Call Center</h1>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -106,7 +106,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900">TW2GEM Server Control</h3>
+                  <h3 className="text-lg font-semibold text-slate-900">AI Server Control</h3>
                   <p className="text-slate-600">Manage your AI calling server</p>
                 </div>
                 <button
@@ -274,14 +274,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {activeTab === 'settings' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Gemini AI Configuration</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">AI Model Configuration</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Model
                   </label>
                   <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>models/gemini-2.0-flash-live-001</option>
+                    <option>ai-model-v2.0-live</option>
+                    <option>ai-model-v2.5-standard</option>
+                    <option>ai-model-pro</option>
                   </select>
                 </div>
                 <div>
@@ -299,8 +301,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     Language
                   </label>
                   <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>es-US (Spanish)</option>
                     <option>en-US (English)</option>
+                    <option>es-US (Spanish)</option>
+                    <option>fr-FR (French)</option>
+                    <option>de-DE (German)</option>
                   </select>
                 </div>
                 <div>
@@ -310,14 +314,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <textarea 
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
-                    defaultValue="Eres un asistente virtual de la tienda online store.com"
+                    defaultValue="You are a professional AI assistant for customer service calls. Be helpful, polite, and efficient."
                   />
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Twilio Configuration</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Phone System Configuration</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
