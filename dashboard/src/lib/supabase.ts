@@ -28,6 +28,10 @@ export interface Profile {
   twilio_webhook_url?: string
   is_active: boolean
   subscription_ends_at?: string
+  // Feature gating columns
+  can_use_inbound: boolean
+  can_use_outbound_dialer: boolean
+  max_agent_configurations: number
   created_at: string
   updated_at: string
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AuthPage from './components/AuthPage'
 import Dashboard from './components/Dashboard'
+import { UserProvider } from './contexts/UserContext'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -14,13 +15,13 @@ function App() {
   }
 
   return (
-    <>
+    <UserProvider>
       {isAuthenticated ? (
         <Dashboard onLogout={handleLogout} />
       ) : (
         <AuthPage onLogin={handleLogin} />
       )}
-    </>
+    </UserProvider>
   )
 }
 

@@ -32,7 +32,7 @@ export const mockAuth = {
     }
   },
 
-  signUp: async ({ email, password }: { email: string; password: string }) => {
+  signUp: async ({ email: _email, password: _password }: { email: string; password: string }) => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     return { 
       data: { user: null }, 
@@ -57,7 +57,7 @@ export const mockAuth = {
     return { data: { session: null }, error: null }
   },
 
-  resetPasswordForEmail: async (email: string) => {
+  resetPasswordForEmail: async (_email: string) => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     return { 
       data: {}, 
