@@ -13,32 +13,6 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
-// Demo user data for fallback
-const demoUser: Profile = {
-  id: 'demo-user-1',
-  user_id: 'demo-user-1',
-  client_name: 'Demo User',
-  company_name: 'AI Call Center Demo',
-  email: 'demo@example.com',
-  phone_number: '+1 (555) 123-4567',
-  plan_name: 'professional',
-  monthly_minute_limit: 1000,
-  minutes_used: 752,
-  system_instruction: 'You are a professional AI assistant for customer service calls. Be helpful, polite, and efficient.',
-  voice_name: 'Puck',
-  language_code: 'en-US',
-  agent_type: 'customer_service',
-  twilio_phone_number: '+1 (555) 987-6543',
-  twilio_webhook_url: 'https://demo.callcenter.ai/webhook',
-  is_active: true,
-  subscription_ends_at: '2024-12-31T23:59:59Z',
-  can_use_inbound: true,
-  can_use_outbound_dialer: true,
-  max_agent_configurations: 3,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-06-10T00:00:00Z'
-}
-
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,33 +27,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true)
-      
-      // Check if we're in demo mode
-      if (authUser.email === 'demo@example.com') {
-        setUser(demoUser)
-        setLoading(false)
-        return
-      }
-
       const profile = await DatabaseService.getProfile(authUser.id)
-      
-      if (profile) {
-        setUser(profile)
-      } else {
-        // Profile doesn't exist, this shouldn't happen with the trigger
-        // but let's handle it gracefully
-        console.warn('Profile not found for user:', authUser.id)
-        setUser(null)
-      }
+      setUser(profile)
     } catch (error) {
       console.error('Error loading user profile:', error)
-      // Fallback to demo user in case of error
-      if (authUser.email === 'demo@example.com') {
-        setUser(demoUser)
-      } else {
-        toast.error('Failed to load user profile')
-        setUser(null)
-      }
+      toast.error('Failed to load user profile')
+      setUser(null)
     } finally {
       setLoading(false)
     }
@@ -96,13 +49,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // For demo user, just update locally
-      if (authUser.email === 'demo@example.com') {
-        setUser({ ...user, ...updates })
-        toast.success('Profile updated successfully')
-        return
-      }
-
       const updatedProfile = await DatabaseService.updateProfile(authUser.id, updates)
       
       if (updatedProfile) {
@@ -143,9 +89,9 @@ export function usePermissions() {
   return {
     canUseInbound: user?.can_use_inbound ?? false,
     canUseOutboundDialer: user?.can_use_outbound_dialer ?? false,
-    maxAgentConfigurations: user?.max_agent_configurations ?? 1,
+    maxAgentConfigurations: user?.max_concurrent_calls ?? 1,
     hasReachedAgentLimit: (currentCount: number) => 
-      currentCount >= (user?.max_agent_configurations ?? 1),
-    planName: user?.plan_name ?? 'starter'
+      currentCount >= (user?.max_concurrent_calls ?? 1),
+    planName: user?.plan_name ?? 'free'
   }
 }

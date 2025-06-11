@@ -4,34 +4,53 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  console.warn('Missing Supabase environment variables - running in demo mode')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(
+  supabaseUrl || 'https://demo.supabase.co', 
+  supabaseAnonKey || 'demo-key'
+)
 
 // Database types
 export interface Profile {
   id: string
-  user_id: string
-  client_name: string
-  company_name?: string
   email: string
+  client_name?: string
+  company_name?: string
   phone_number?: string
-  plan_name: 'starter' | 'professional' | 'enterprise'
+  plan_name: 'free' | 'starter' | 'professional' | 'enterprise'
   monthly_minute_limit: number
   minutes_used: number
-  system_instruction: string
-  voice_name: string
+  is_active: boolean
+  can_use_inbound: boolean
+  can_use_outbound_dialer: boolean
+  max_concurrent_calls: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AIAgent {
+  id: string
+  profile_id: string
+  name: string
+  description?: string
+  agent_type: 'customer_service' | 'sales' | 'support' | 'appointment_booking' | 'survey' | 'after_hours' | 'general'
+  voice_name: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoede' | 'Leda' | 'Orus' | 'Zephyr'
   language_code: string
-  agent_type: string
+  system_instruction?: string
   twilio_phone_number?: string
   twilio_webhook_url?: string
   is_active: boolean
-  subscription_ends_at?: string
-  // Feature gating columns
-  can_use_inbound: boolean
-  can_use_outbound_dialer: boolean
-  max_agent_configurations: number
+  max_concurrent_calls: number
+  business_hours_start?: string
+  business_hours_end?: string
+  business_days: number[]
+  timezone: string
+  escalation_enabled: boolean
+  escalation_type?: 'human_agent' | 'supervisor' | 'voicemail' | 'callback'
+  escalation_phone_number?: string
+  escalation_email?: string
   created_at: string
   updated_at: string
 }
@@ -39,27 +58,28 @@ export interface Profile {
 export interface CallLog {
   id: string
   profile_id: string
-  call_sid: string
-  stream_sid?: string
+  agent_id?: string
+  campaign_id?: string
+  lead_id?: string
   phone_number_from: string
   phone_number_to: string
   direction: 'inbound' | 'outbound'
-  status: 'in_progress' | 'completed' | 'failed' | 'abandoned'
-  duration_seconds: number
+  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'abandoned'
   started_at: string
   ended_at?: string
-  transcript?: string
+  duration_seconds: number
   call_summary?: string
-  sentiment_score?: number
-  intent_detected?: string
-  outcome?: string
+  transcript?: string
   recording_url?: string
-  recording_duration?: number
-  cost_cents: number
-  campaign_id?: string
-  lead_id?: string
+  sentiment_score?: number
+  outcome?: string
+  priority: 'low' | 'normal' | 'high' | 'urgent'
+  customer_satisfaction_score?: number
+  follow_up_required: boolean
+  follow_up_date?: string
+  tags?: string[]
+  metadata?: Record<string, any>
   created_at: string
-  updated_at: string
   outbound_campaigns?: {
     name: string
   }
@@ -68,6 +88,7 @@ export interface CallLog {
 export interface Campaign {
   id: string
   profile_id: string
+  agent_id?: string
   name: string
   description?: string
   status: 'draft' | 'active' | 'paused' | 'completed' | 'cancelled'
@@ -80,15 +101,16 @@ export interface Campaign {
   end_time?: string
   timezone: string
   days_of_week: number[]
+  scheduled_start_date?: string
+  scheduled_end_date?: string
   custom_system_instruction?: string
-  custom_voice_name?: string
+  custom_voice_name?: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoede' | 'Leda' | 'Orus' | 'Zephyr'
+  priority: 'low' | 'normal' | 'high' | 'urgent'
+  compliance_settings?: Record<string, any>
   total_leads: number
   leads_called: number
   leads_answered: number
   leads_completed: number
-  scheduled_start_at?: string
-  started_at?: string
-  completed_at?: string
   created_at: string
   updated_at: string
 }
@@ -96,20 +118,42 @@ export interface Campaign {
 export interface CampaignLead {
   id: string
   campaign_id: string
-  profile_id: string
   phone_number: string
   first_name?: string
   last_name?: string
   email?: string
   company?: string
-  custom_data: Record<string, any>
+  title?: string
   status: 'pending' | 'called' | 'answered' | 'no_answer' | 'busy' | 'failed' | 'completed'
+  priority: 'low' | 'normal' | 'high' | 'urgent'
   call_attempts: number
   last_call_at?: string
   next_call_at?: string
-  call_log_id?: string
   outcome?: string
   notes?: string
+  custom_fields?: Record<string, any>
+  do_not_call: boolean
+  preferred_call_time?: string
+  timezone?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Appointment {
+  id: string
+  profile_id: string
+  call_log_id?: string
+  lead_id?: string
+  customer_name: string
+  customer_phone: string
+  customer_email?: string
+  appointment_type: string
+  scheduled_date: string
+  duration_minutes: number
+  location?: string
+  notes?: string
+  status: string
+  reminder_sent: boolean
   created_at: string
   updated_at: string
 }

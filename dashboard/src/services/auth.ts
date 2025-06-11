@@ -27,9 +27,8 @@ export interface ResetPasswordData {
 export class AuthService {
   // Check if we're in demo mode
   private static isDemoMode(): boolean {
-    return import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' || 
-           !import.meta.env.VITE_SUPABASE_URL || 
-           !import.meta.env.VITE_SUPABASE_ANON_KEY
+    return !import.meta.env.VITE_SUPABASE_URL || 
+           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co'
   }
 
   // Sign up new user
@@ -44,7 +43,7 @@ export class AuthService {
         password: data.password,
         options: {
           data: {
-            name: data.clientName,
+            client_name: data.clientName,
             company_name: data.companyName,
             phone_number: data.phoneNumber
           }
@@ -150,70 +149,6 @@ export class AuthService {
     }
   }
 
-  // Update password
-  static async updatePassword(newPassword: string): Promise<{ error: AuthError | null }> {
-    if (this.isDemoMode()) {
-      return { error: { message: 'Password update not available in demo mode' } }
-    }
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      })
-      
-      if (error) {
-        return { error: { message: error.message } }
-      }
-
-      return { error: null }
-    } catch (error) {
-      console.error('Update password error:', error)
-      return { error: { message: 'An unexpected error occurred' } }
-    }
-  }
-
-  // Update user metadata
-  static async updateUserMetadata(metadata: Record<string, any>): Promise<{ error: AuthError | null }> {
-    if (this.isDemoMode()) {
-      return { error: { message: 'User metadata update not available in demo mode' } }
-    }
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: metadata
-      })
-      
-      if (error) {
-        return { error: { message: error.message } }
-      }
-
-      return { error: null }
-    } catch (error) {
-      console.error('Update user metadata error:', error)
-      return { error: { message: 'An unexpected error occurred' } }
-    }
-  }
-
-  // Refresh session
-  static async refreshSession(): Promise<{ session: Session | null; error: AuthError | null }> {
-    if (this.isDemoMode()) {
-      return await this.getSession()
-    }
-
-    try {
-      const { data, error } = await supabase.auth.refreshSession()
-      
-      if (error) {
-        return { session: null, error: { message: error.message } }
-      }
-
-      return { session: data.session, error: null }
-    } catch (error) {
-      console.error('Refresh session error:', error)
-      return { session: null, error: { message: 'An unexpected error occurred' } }
-    }
-  }
-
   // Listen to auth state changes
   static onAuthStateChange(callback: (event: string, session: Session | null) => void) {
     if (this.isDemoMode()) {
@@ -258,41 +193,6 @@ export class AuthService {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(callback)
     return () => subscription.unsubscribe()
-  }
-
-  // Get current user
-  static async getCurrentUser(): Promise<{ user: User | null; error: AuthError | null }> {
-    if (this.isDemoMode()) {
-      const demoUser = localStorage.getItem('demo_user')
-      if (demoUser) {
-        try {
-          const user = JSON.parse(demoUser)
-          return { user, error: null }
-        } catch (error) {
-          return { user: null, error: { message: 'Invalid demo user data' } }
-        }
-      }
-      return { user: null, error: null }
-    }
-
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      
-      if (error) {
-        return { user: null, error: { message: error.message } }
-      }
-
-      return { user, error: null }
-    } catch (error) {
-      console.error('Get current user error:', error)
-      return { user: null, error: { message: 'An unexpected error occurred' } }
-    }
-  }
-
-  // Check if user is authenticated
-  static async isAuthenticated(): Promise<boolean> {
-    const { session } = await this.getSession()
-    return !!session
   }
 
   // Get demo credentials (for demo mode)
