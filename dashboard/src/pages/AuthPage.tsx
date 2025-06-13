@@ -75,12 +75,6 @@ export default function AuthPage() {
   }
 
   const handleDemoLogin = async () => {
-    // Only allow demo login in demo mode
-    if (import.meta.env.VITE_ENABLE_DEMO_MODE !== 'true') {
-      toast.error('Demo mode is disabled')
-      return
-    }
-
     const demoCredentials = AuthService.getDemoCredentials()
     setFormData({
       ...formData,
@@ -343,27 +337,24 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* Demo Access - Only show if demo mode is enabled */}
-          {import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-800 font-medium">Demo Access</p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Try the platform with demo data
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                  className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50"
-                >
-                  Demo Login
-                </button>
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-800 font-medium">Demo Access</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Try the platform with demo data
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+                className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50"
+              >
+                Demo Login
+              </button>
             </div>
-          )}
+          </div>
         </form>
       </div>
     </div>

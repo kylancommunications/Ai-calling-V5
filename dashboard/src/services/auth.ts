@@ -27,9 +27,14 @@ export interface ResetPasswordData {
 export class AuthService {
   // Check if we're in demo mode
   private static isDemoMode(): boolean {
-    return import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' ||
-           !import.meta.env.VITE_SUPABASE_URL || 
-           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co'
+    // Force demo mode since Supabase URLs are commented out
+    const demoMode = true
+    console.log('Demo mode check:', {
+      VITE_ENABLE_DEMO_MODE: import.meta.env.VITE_ENABLE_DEMO_MODE,
+      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      result: demoMode
+    })
+    return demoMode
   }
 
   // Sign up new user
