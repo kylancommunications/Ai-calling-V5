@@ -373,7 +373,9 @@ function CreateCampaignModal({ onClose, onSuccess }: { onClose: () => void; onSu
         total_leads: 0,
         leads_called: 0,
         leads_answered: 0,
-        leads_completed: 0
+        leads_completed: 0,
+        priority: 'normal' as const,
+        custom_voice_name: formData.custom_voice_name as Campaign['custom_voice_name']
       })
       
       toast.success('Campaign created successfully')

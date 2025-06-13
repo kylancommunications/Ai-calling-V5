@@ -35,7 +35,8 @@ export class AuthService {
   // Sign up new user
   static async signUp(data: SignUpData): Promise<{ user: User | null; error: AuthError | null }> {
     if (this.isDemoMode()) {
-      return await mockAuth.signUp(data)
+      const result = await mockAuth.signUp(data)
+      return { user: result.data.user, error: result.error }
     }
 
     try {
@@ -65,7 +66,8 @@ export class AuthService {
   // Sign in existing user
   static async signIn(data: SignInData): Promise<{ user: User | null; error: AuthError | null }> {
     if (this.isDemoMode()) {
-      return await mockAuth.signInWithPassword(data)
+      const result = await mockAuth.signInWithPassword(data)
+      return { user: result.data.user as unknown as User, error: result.error }
     }
 
     try {

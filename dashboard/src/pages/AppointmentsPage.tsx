@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
 import { 
   CalendarIcon, 
-  ClockIcon, 
   UserIcon, 
-  PhoneIcon,
-  MapPinIcon,
   PlusIcon,
   PencilIcon,
   TrashIcon,
@@ -388,7 +385,8 @@ function CreateAppointmentModal({ onClose, onSuccess }: { onClose: () => void; o
       await DatabaseService.createAppointment({
         ...formData,
         profile_id: user.id,
-        status: 'scheduled'
+        status: 'scheduled',
+        reminder_sent: false
       })
       
       toast.success('Appointment scheduled successfully')
