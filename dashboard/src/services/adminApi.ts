@@ -27,16 +27,17 @@ export class AdminAPI {
   // Create a new user (admin only)
   static async createUser(userData: CreateUserData): Promise<{ user: UserData | null; error: string | null }> {
     try {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use regular signup since we don't have service role key for admin.createUser
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
-        email_confirm: true, // Skip email confirmation for admin-created users
-        user_metadata: {
-          client_name: userData.clientName,
-          company_name: userData.companyName,
-          phone_number: userData.phoneNumber,
-          role: 'user'
+        options: {
+          data: {
+            client_name: userData.clientName,
+            company_name: userData.companyName,
+            phone_number: userData.phoneNumber,
+            role: 'user'
+          }
         }
       })
 
@@ -44,29 +45,45 @@ export class AdminAPI {
         return { user: null, error: authError.message }
       }
 
-      // Then create the user profile with permissions and usage cap
+      if (!authData.user) {
+        return { user: null, error: 'User creation failed - no user data returned' }
+      }
+
+      // The profile should be automatically created by the database trigger
+      // Let's wait a moment and then fetch the profile
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          email: userData.email,
-          client_name: userData.clientName,
-          company_name: userData.companyName,
-          phone_number: userData.phoneNumber,
-          usage_cap: userData.usageCap,
-          used_minutes: 0,
-          permissions: userData.permissions,
-          is_active: true,
-          created_at: new Date().toISOString()
-        })
-        .select()
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
         .single()
 
       if (profileError) {
-        // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id)
-        return { user: null, error: profileError.message }
+        return { user: null, error: `Profile creation failed: ${profileError.message}. User created but profile not found. Email confirmation may be required.` }
       }
+
+      // Update the profile with admin-specified data
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          client_name: userData.clientName,
+          company_name: userData.companyName,
+          phone_number: userData.phoneNumber,
+          permissions: userData.permissions,
+          usage_cap: userData.usageCap,
+          used_minutes: 0,
+          is_active: true
+        })
+        .eq('id', authData.user.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        return { user: null, error: `Profile update failed: ${updateError.message}` }
+      }
+
+      const finalProfile = updatedProfile || profileData
 
       const user: UserData = {
         id: profileData.id,
@@ -92,7 +109,7 @@ export class AdminAPI {
   static async getUsers(): Promise<{ users: UserData[]; error: string | null }> {
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -124,7 +141,7 @@ export class AdminAPI {
   static async updateUserStatus(userId: string, isActive: boolean): Promise<{ error: string | null }> {
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ is_active: isActive })
         .eq('id', userId)
 
@@ -142,9 +159,9 @@ export class AdminAPI {
   // Delete user (admin only)
   static async deleteUser(userId: string): Promise<{ error: string | null }> {
     try {
-      // Delete from user_profiles first
+      // Delete from profiles first
       const { error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .delete()
         .eq('id', userId)
 
@@ -170,7 +187,7 @@ export class AdminAPI {
   static async updateUserUsage(userId: string, minutesUsed: number): Promise<{ error: string | null }> {
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ used_minutes: minutesUsed })
         .eq('id', userId)
 

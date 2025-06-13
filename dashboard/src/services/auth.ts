@@ -27,11 +27,16 @@ export interface ResetPasswordData {
 export class AuthService {
   // Check if we're in demo mode
   private static isDemoMode(): boolean {
-    // Force demo mode since Supabase URLs are commented out
-    const demoMode = true
+    // Check environment variables to determine demo mode
+    const hasSupabaseConfig = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
+    const demoModeEnabled = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true'
+    const demoMode = demoModeEnabled && !hasSupabaseConfig
+    
     console.log('Demo mode check:', {
       VITE_ENABLE_DEMO_MODE: import.meta.env.VITE_ENABLE_DEMO_MODE,
       VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      hasSupabaseConfig,
+      demoModeEnabled,
       result: demoMode
     })
     return demoMode

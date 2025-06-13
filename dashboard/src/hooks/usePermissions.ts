@@ -51,9 +51,10 @@ export function usePermissions() {
     if (!user) return
 
     try {
-      // Check if user is admin
-      const adminEmail = 'admin@aicallcenter.com'
-      const userIsAdmin = user.email === adminEmail
+      // Check if user is admin or demo user (demo users get admin permissions)
+      const adminEmails = ['admin@aicallcenter.com', 'admin@example.com']
+      const demoEmail = 'demo@example.com'
+      const userIsAdmin = adminEmails.includes(user.email || '') || user.email === demoEmail
 
       setIsAdmin(userIsAdmin)
 
@@ -76,7 +77,7 @@ export function usePermissions() {
         setProfile({
           id: user.id,
           email: user.email || '',
-          client_name: 'Admin',
+          client_name: adminEmails.includes(user.email || '') ? 'Admin' : 'Demo User (Admin Access)',
           permissions: adminPermissions,
           usage_cap: 0, // unlimited for admin
           used_minutes: 0,
@@ -93,19 +94,19 @@ export function usePermissions() {
 
         if (error) {
           console.error('Error loading user profile:', error)
-          // Set default permissions if profile not found
+          // Set default permissions if profile not found - give demo users full access
           const defaultPermissions: UserPermissions = {
             dashboard: true,
-            agents: false,
-            calls: false,
-            campaigns: false,
-            analytics: false,
-            appointments: false,
-            billing: false,
-            settings: false,
-            webhooks: false,
-            dnc: false,
-            status: false
+            agents: true,
+            calls: true,
+            campaigns: true,
+            analytics: true,
+            appointments: true,
+            billing: true,
+            settings: true,
+            webhooks: true,
+            dnc: true,
+            status: true
           }
           setPermissions(defaultPermissions)
         } else {

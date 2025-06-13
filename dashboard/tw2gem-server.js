@@ -1,4 +1,8 @@
 import { Tw2GemServer } from '../packages/tw2gem-server/dist/index.js';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const PORT = parseInt(process.env.PORT || '12001', 10);
 
