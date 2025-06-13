@@ -52,6 +52,7 @@ export default function DashboardPage() {
 
       // Simulate server status based on active calls
       setServerStatus(active.length > 0 ? 'running' : 'stopped')
+
     } catch (error) {
       console.error('Error loading dashboard data:', error)
       toast.error('Failed to load dashboard data')
