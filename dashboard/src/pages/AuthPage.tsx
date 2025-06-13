@@ -4,7 +4,7 @@ import { AuthService } from '../services/auth'
 import toast from 'react-hot-toast'
 
 export default function AuthPage() {
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isAdminSetup, setIsAdminSetup] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -22,14 +22,13 @@ export default function AuthPage() {
     setIsLoading(true)
 
     try {
-      if (isSignUp) {
-        // Validate passwords match
+      if (isAdminSetup) {
+        // One-time admin setup
         if (formData.password !== formData.confirmPassword) {
           toast.error('Passwords do not match')
           return
         }
 
-        // Validate password strength
         if (formData.password.length < 6) {
           toast.error('Password must be at least 6 characters long')
           return
@@ -46,7 +45,7 @@ export default function AuthPage() {
         if (error) {
           toast.error(error.message)
         } else if (user) {
-          toast.success('Account created successfully! Please check your email to verify your account.')
+          toast.success('Admin account created successfully!')
         }
       } else {
         const { user, error } = await AuthService.signIn({
@@ -76,6 +75,12 @@ export default function AuthPage() {
   }
 
   const handleDemoLogin = async () => {
+    // Only allow demo login in demo mode
+    if (import.meta.env.VITE_ENABLE_DEMO_MODE !== 'true') {
+      toast.error('Demo mode is disabled')
+      return
+    }
+
     const demoCredentials = AuthService.getDemoCredentials()
     setFormData({
       ...formData,
@@ -123,6 +128,29 @@ export default function AuthPage() {
     }
   }
 
+  const handleResendVerification = async () => {
+    if (!formData.email) {
+      toast.error('Please enter your email address first')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const { error } = await AuthService.resendConfirmation({ email: formData.email })
+      
+      if (error) {
+        toast.error(error.message)
+      } else {
+        toast.success('Verification email sent! Check your inbox.')
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error)
+      toast.error('Failed to send verification email')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -135,13 +163,13 @@ export default function AuthPage() {
           </div>
           <h2 className="text-3xl font-bold text-slate-900">AI Call Center</h2>
           <p className="mt-2 text-sm text-slate-600">
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            {isAdminSetup ? 'Setup admin account' : 'Sign in to your account'}
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {isSignUp && (
+            {isAdminSetup && (
               <>
                 <div>
                   <label htmlFor="clientName" className="block text-sm font-medium text-slate-700">
@@ -215,7 +243,7 @@ export default function AuthPage() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  autoComplete={isAdminSetup ? "new-password" : "current-password"}
                   required
                   value={formData.password}
                   onChange={handleInputChange}
@@ -234,14 +262,14 @@ export default function AuthPage() {
                   )}
                 </button>
               </div>
-              {isSignUp && (
+              {isAdminSetup && (
                 <p className="mt-1 text-xs text-slate-500">
                   Must be at least 6 characters long
                 </p>
               )}
             </div>
 
-            {isSignUp && (
+            {isAdminSetup && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700">
                   Confirm Password *
@@ -283,10 +311,10 @@ export default function AuthPage() {
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {isSignUp ? 'Creating Account...' : 'Signing In...'}
+                  {isAdminSetup ? 'Creating Admin Account...' : 'Signing In...'}
                 </div>
               ) : (
-                isSignUp ? 'Create Account' : 'Sign In'
+                isAdminSetup ? 'Create Admin Account' : 'Sign In'
               )}
             </button>
           </div>
@@ -294,18 +322,15 @@ export default function AuthPage() {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-blue-600 hover:text-blue-500"
+              onClick={() => setIsAdminSetup(!isAdminSetup)}
+              className="text-xs text-gray-500 hover:text-gray-400"
               disabled={isLoading}
             >
-              {isSignUp 
-                ? 'Already have an account? Sign in' 
-                : "Don't have an account? Sign up"
-              }
+              {isAdminSetup ? 'Back to Login' : 'First Time Setup'}
             </button>
           </div>
 
-          {!isSignUp && (
+          {!isAdminSetup && (
             <div className="text-center">
               <button
                 type="button"
@@ -318,24 +343,27 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-800 font-medium">Demo Access</p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Try the platform with demo data
-                </p>
+          {/* Demo Access - Only show if demo mode is enabled */}
+          {import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-800 font-medium">Demo Access</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Try the platform with demo data
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  disabled={isLoading}
+                  className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50"
+                >
+                  Demo Login
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-                className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50"
-              >
-                Demo Login
-              </button>
             </div>
-          </div>
+          )}
         </form>
       </div>
     </div>

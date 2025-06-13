@@ -44,6 +44,7 @@ export class AuthService {
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: undefined, // Disable email confirmation
           data: {
             client_name: data.clientName,
             company_name: data.companyName,
@@ -148,6 +149,33 @@ export class AuthService {
       return { error: null }
     } catch (error) {
       console.error('Reset password error:', error)
+      return { error: { message: 'An unexpected error occurred' } }
+    }
+  }
+
+  // Resend confirmation email
+  static async resendConfirmation(data: ResetPasswordData): Promise<{ error: AuthError | null }> {
+    if (this.isDemoMode()) {
+      // In demo mode, just return success
+      return { error: null }
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: data.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/verify`
+        }
+      })
+      
+      if (error) {
+        return { error: { message: error.message } }
+      }
+
+      return { error: null }
+    } catch (error) {
+      console.error('Resend confirmation error:', error)
       return { error: { message: 'An unexpected error occurred' } }
     }
   }

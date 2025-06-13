@@ -27,9 +27,28 @@ create table profiles (
   can_use_inbound boolean default true,
   can_use_outbound_dialer boolean default false,
   max_concurrent_calls integer default 1,
+  permissions jsonb default '{"dashboard": true, "agents": false, "calls": false, "campaigns": false, "analytics": false, "appointments": false, "billing": false, "settings": false, "webhooks": false, "dnc": false, "status": false}',
+  usage_cap integer default 1000, -- monthly usage cap in minutes
+  used_minutes integer default 0, -- current month usage
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- Create user_profiles view for admin API compatibility
+create or replace view user_profiles as
+select 
+  id,
+  email,
+  client_name,
+  company_name,
+  phone_number,
+  permissions,
+  usage_cap,
+  used_minutes,
+  is_active,
+  created_at,
+  updated_at
+from profiles;
 
 -- AI Agents table (multiple agents per user)
 create table ai_agents (
