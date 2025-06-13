@@ -137,10 +137,7 @@ export default function CallsPage() {
     setShowTranscript(true)
   }
 
-  const handleExportCalls = () => {
-    // In a real implementation, this would generate and download a CSV
-    toast.success('Export feature coming soon!')
-  }
+
 
   const filteredCalls = calls.filter(call => {
     const matchesDirection = filter === 'all' || call.direction === filter

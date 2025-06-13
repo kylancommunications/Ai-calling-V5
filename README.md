@@ -93,18 +93,38 @@ Create a `.env.local` file in the `dashboard` directory:
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Optional: Custom App Configuration
+# App Configuration
 VITE_APP_NAME="AI Call Center"
-VITE_APP_URL=http://localhost:3000
+VITE_APP_URL=http://localhost:12000
+
+# API Keys
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_TWILIO_ACCOUNT_SID=your_twilio_account_sid
+VITE_TWILIO_AUTH_TOKEN=your_twilio_auth_token
+VITE_TWILIO_PHONE_NUMBER=your_twilio_phone_number
 ```
 
-### 5. Start Development Server
+### 5. Start the Application (Single Command)
 
 ```bash
-npm run dev
+npm start
 ```
 
-The application will be available at `http://localhost:5173`
+This will:
+- Install all dependencies
+- Start the TW2GEM server on port 12001
+- Start the dashboard on port 12000
+
+The application will be available at:
+- **Dashboard**: `http://localhost:12000`
+- **TW2GEM Server**: `ws://localhost:12001`
+
+Or start services individually:
+```bash
+npm run start-services  # Start both services
+npm run dashboard       # Start only dashboard
+npm run tw2gem-server   # Start only server
+```
 
 ### 6. Demo Login
 

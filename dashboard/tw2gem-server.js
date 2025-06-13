@@ -1,6 +1,6 @@
-const { Tw2GemServer } = require('@tw2gem/server');
+import { Tw2GemServer } from '../packages/tw2gem-server/dist/index.js';
 
-const PORT = process.env.PORT || 6593;
+const PORT = parseInt(process.env.PORT || '12001', 10);
 
 const server = new Tw2GemServer({
     serverOptions: {

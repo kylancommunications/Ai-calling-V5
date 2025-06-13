@@ -1,7 +1,7 @@
 import { Tw2GemServer } from '@tw2gem/server';
 
 const tw2gemServer = () => {
-    const PORT = 6593;
+    const PORT = parseInt(process.env.PORT || '12001', 10);
     const server = new Tw2GemServer({
         serverOptions: {
             port: PORT

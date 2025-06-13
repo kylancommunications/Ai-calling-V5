@@ -2,7 +2,7 @@ import { TwilioWebSocketServer } from '@tw2gem/twilio-server';
 
 const twilioServer = () => {
     const wsServer = new TwilioWebSocketServer({
-        port: 6593,
+        port: parseInt(process.env.PORT || '12001', 10),
         handlers: {
             onConnected: (socket, event) => {
                 console.log(`Twlilio onConnected: ${JSON.stringify(event)}`);
