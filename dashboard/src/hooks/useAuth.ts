@@ -45,8 +45,8 @@ export function useAuth() {
       console.error('Error signing out:', error)
     } finally {
       setLoading(false)
-      // Force reload to clear state
-      window.location.reload()
+      // Force redirect to login page to clear state
+      window.location.href = '/'
     }
   }
 

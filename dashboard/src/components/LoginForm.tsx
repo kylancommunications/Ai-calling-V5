@@ -33,12 +33,16 @@ export default function LoginForm() {
       } else {
         // Try Supabase first, fallback to mock
         try {
-          const { error } = await supabase.auth.signInWithPassword({
+          const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
           })
           if (error) throw error
-          toast.success('Welcome back!')
+          if (data.user) {
+            toast.success('Welcome back!')
+            // Force navigation to dashboard after successful login
+            window.location.href = '/dashboard'
+          }
         } catch (supabaseError) {
           const { data, error } = await mockAuth.signInWithPassword({ email, password })
           if (error) throw error
@@ -76,12 +80,16 @@ export default function LoginForm() {
     try {
       // Try Supabase first, fallback to mock
       try {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: 'demo@example.com',
           password: 'demo123',
         })
         if (error) throw error
-        toast.success('Demo login successful!')
+        if (data.user) {
+          toast.success('Demo login successful!')
+          // Force navigation to dashboard after successful login
+          window.location.href = '/dashboard'
+        }
       } catch (supabaseError) {
         const { data, error } = await mockAuth.signInWithPassword({
           email: 'demo@example.com',
