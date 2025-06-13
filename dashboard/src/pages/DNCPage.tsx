@@ -7,7 +7,7 @@ import {
   ExclamationTriangleIcon,
   PhoneIcon,
   CalendarIcon,
-  UserIcon
+
 } from '@heroicons/react/24/outline'
 import { useUser } from '../contexts/UserContext'
 import { DatabaseService } from '../services/database'
@@ -344,7 +344,10 @@ function AddDNCModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       await DatabaseService.addDNCEntry({
         ...formData,
         profile_id: user.id,
-        expiry_date: formData.expiry_date || null
+        is_active: true,
+        added_date: new Date().toISOString(),
+        expiry_date: formData.expiry_date || undefined,
+        source: formData.source as DNCEntry['source']
       })
       
       toast.success('Number added to DNC list')
@@ -481,7 +484,13 @@ function BulkUploadModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           }
         }).filter(entry => entry.phone_number)
 
-        await DatabaseService.bulkAddDNCEntries(entries)
+        const entriesWithDefaults = entries.map(entry => ({
+          ...entry,
+          is_active: true,
+          added_date: new Date().toISOString(),
+          source: entry.source as DNCEntry['source']
+        }))
+        await DatabaseService.bulkAddDNCEntries(entriesWithDefaults)
         toast.success(`Added ${entries.length} numbers to DNC list`)
         onSuccess()
         onClose()

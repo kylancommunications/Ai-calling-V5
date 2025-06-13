@@ -27,15 +27,21 @@ export interface ResetPasswordData {
 export class AuthService {
   // Check if we're in demo mode
   private static isDemoMode(): boolean {
-    return import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' ||
-           !import.meta.env.VITE_SUPABASE_URL || 
-           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co'
+    // Force demo mode since Supabase URLs are commented out
+    const demoMode = true
+    console.log('Demo mode check:', {
+      VITE_ENABLE_DEMO_MODE: import.meta.env.VITE_ENABLE_DEMO_MODE,
+      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      result: demoMode
+    })
+    return demoMode
   }
 
   // Sign up new user
   static async signUp(data: SignUpData): Promise<{ user: User | null; error: AuthError | null }> {
     if (this.isDemoMode()) {
-      return await mockAuth.signUp(data)
+      const result = await mockAuth.signUp(data)
+      return { user: result.data.user, error: result.error }
     }
 
     try {
@@ -43,6 +49,7 @@ export class AuthService {
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: undefined, // Disable email confirmation
           data: {
             client_name: data.clientName,
             company_name: data.companyName,
@@ -65,7 +72,8 @@ export class AuthService {
   // Sign in existing user
   static async signIn(data: SignInData): Promise<{ user: User | null; error: AuthError | null }> {
     if (this.isDemoMode()) {
-      return await mockAuth.signInWithPassword(data)
+      const result = await mockAuth.signInWithPassword(data)
+      return { user: result.data.user as unknown as User, error: result.error }
     }
 
     try {
@@ -146,6 +154,33 @@ export class AuthService {
       return { error: null }
     } catch (error) {
       console.error('Reset password error:', error)
+      return { error: { message: 'An unexpected error occurred' } }
+    }
+  }
+
+  // Resend confirmation email
+  static async resendConfirmation(data: ResetPasswordData): Promise<{ error: AuthError | null }> {
+    if (this.isDemoMode()) {
+      // In demo mode, just return success
+      return { error: null }
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: data.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/verify`
+        }
+      })
+      
+      if (error) {
+        return { error: { message: error.message } }
+      }
+
+      return { error: null }
+    } catch (error) {
+      console.error('Resend confirmation error:', error)
       return { error: { message: 'An unexpected error occurred' } }
     }
   }

@@ -6,7 +6,7 @@ import {
   ClockIcon,
   ServerIcon,
   PhoneIcon,
-  DatabaseIcon,
+  CircleStackIcon as DatabaseIcon,
   LinkIcon,
   BoltIcon,
   ChartBarIcon

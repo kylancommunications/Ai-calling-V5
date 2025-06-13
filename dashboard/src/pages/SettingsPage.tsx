@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Switch } from '@headlessui/react'
 import { EyeIcon, EyeSlashIcon, KeyIcon, UserIcon, PhoneIcon } from '@heroicons/react/24/outline'
 import { useUser } from '../contexts/UserContext'
-import { DatabaseService } from '../services/database'
 import toast from 'react-hot-toast'
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
 
 export default function SettingsPage() {
   const { user, updateUser } = useUser()
@@ -48,12 +42,12 @@ export default function SettingsPage() {
         company_name: user.company_name || '',
         email: user.email || '',
         phone_number: user.phone_number || '',
-        system_instruction: user.system_instruction || '',
-        voice_name: user.voice_name || 'Puck',
-        language_code: user.language_code || 'en-US',
-        agent_type: user.agent_type || 'customer_service',
-        twilio_phone_number: user.twilio_phone_number || '',
-        twilio_webhook_url: user.twilio_webhook_url || '',
+        system_instruction: '',
+        voice_name: 'Puck',
+        language_code: 'en-US',
+        agent_type: 'customer_service',
+        twilio_phone_number: '',
+        twilio_webhook_url: '',
         gemini_api_key: '',
         twilio_account_sid: '',
         twilio_auth_token: ''
@@ -73,13 +67,7 @@ export default function SettingsPage() {
       await updateUser({
         client_name: formData.client_name,
         company_name: formData.company_name,
-        phone_number: formData.phone_number,
-        system_instruction: formData.system_instruction,
-        voice_name: formData.voice_name,
-        language_code: formData.language_code,
-        agent_type: formData.agent_type,
-        twilio_phone_number: formData.twilio_phone_number,
-        twilio_webhook_url: formData.twilio_webhook_url
+        phone_number: formData.phone_number
       })
     } catch (error) {
       console.error('Error saving profile:', error)

@@ -431,7 +431,7 @@ export class RealtimeService {
       return
     }
 
-    this.channels.forEach((channel, channelName) => {
+    this.channels.forEach((channel) => {
       supabase.removeChannel(channel)
     })
     this.channels.clear()

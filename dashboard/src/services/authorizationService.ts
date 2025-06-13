@@ -126,7 +126,7 @@ export class AuthorizationService {
     // Mock user data - in production this would be a database query
     const mockUser: Profile = {
       id: userId,
-      user_id: userId,
+
       client_name: 'Demo User',
       company_name: 'AI Call Center Demo',
       email: 'demo@callcenter.ai',
@@ -134,17 +134,13 @@ export class AuthorizationService {
       plan_name: 'professional',
       monthly_minute_limit: 1000,
       minutes_used: 752,
-      system_instruction: 'You are a professional AI assistant for customer service calls.',
-      voice_name: 'Puck',
-      language_code: 'en-US',
-      agent_type: 'customer_service',
-      twilio_phone_number: '+1 (555) 987-6543',
-      twilio_webhook_url: 'https://demo.callcenter.ai/webhook',
+
+
       is_active: true,
-      subscription_ends_at: '2024-12-31T23:59:59Z',
+
       can_use_inbound: true,
       can_use_outbound_dialer: true,
-      max_agent_configurations: 3,
+      max_concurrent_calls: 5,
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-06-10T00:00:00Z'
     }
