@@ -9,16 +9,32 @@ import {
   XMarkIcon,
   HomeIcon,
   UserCircleIcon,
+  UserGroupIcon,
+  CalendarIcon,
+  ShieldExclamationIcon,
+  LinkIcon,
+  CreditCardIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../hooks/useAuth'
+import { usePermissions } from '../hooks/usePermissions'
 import { Link, useLocation } from 'react-router-dom'
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Call History', href: '/calls', icon: PhoneIcon },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
-  { name: 'Campaigns', href: '/campaigns', icon: MegaphoneIcon },
-  { name: 'Settings', href: '/settings', icon: CogIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, permission: 'dashboard' },
+  { name: 'AI Agents', href: '/agents', icon: UserGroupIcon, permission: 'agents' },
+  { name: 'Call History', href: '/calls', icon: PhoneIcon, permission: 'calls' },
+  { name: 'Appointments', href: '/appointments', icon: CalendarIcon, permission: 'appointments' },
+  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, permission: 'analytics' },
+  { name: 'Campaigns', href: '/campaigns', icon: MegaphoneIcon, permission: 'campaigns' },
+  { name: 'DNC List', href: '/dnc', icon: ShieldExclamationIcon, permission: 'dnc' },
+  { name: 'Webhooks', href: '/webhooks', icon: LinkIcon, permission: 'webhooks' },
+  { name: 'Billing', href: '/billing', icon: CreditCardIcon, permission: 'billing' },
+  { name: 'Settings', href: '/settings', icon: CogIcon, permission: 'settings' },
+]
+
+const adminNavigation = [
+  { name: 'User Management', href: '/admin/users', icon: UsersIcon },
 ]
 
 function classNames(...classes: string[]) {
@@ -32,7 +48,13 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, signOut } = useAuth()
+  const { hasPermission, isAdmin } = usePermissions()
   const location = useLocation()
+  
+  // Filter navigation items based on permissions
+  const filteredNavigation = navigation.filter(item => 
+    hasPermission(item.permission as any)
+  )
 
   return (
     <>
@@ -90,7 +112,7 @@ export default function Layout({ children }: LayoutProps) {
                       <ul role="list" className="flex flex-1 flex-col gap-y-7">
                         <li>
                           <ul role="list" className="-mx-2 space-y-1">
-                            {navigation.map((item) => (
+                            {filteredNavigation.map((item) => (
                               <li key={item.name}>
                                 <Link
                                   to={item.href}
@@ -116,6 +138,37 @@ export default function Layout({ children }: LayoutProps) {
                             ))}
                           </ul>
                         </li>
+                        {isAdmin && (
+                          <li>
+                            <div className="text-xs font-semibold leading-6 text-gray-400">Admin</div>
+                            <ul role="list" className="-mx-2 mt-2 space-y-1">
+                              {adminNavigation.map((item) => (
+                                <li key={item.name}>
+                                  <Link
+                                    to={item.href}
+                                    className={classNames(
+                                      location.pathname === item.href
+                                        ? 'bg-gray-50 text-blue-600'
+                                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50',
+                                      'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                                    )}
+                                  >
+                                    <item.icon
+                                      className={classNames(
+                                        location.pathname === item.href
+                                          ? 'text-blue-600'
+                                          : 'text-gray-400 group-hover:text-blue-600',
+                                        'h-6 w-6 shrink-0'
+                                      )}
+                                      aria-hidden="true"
+                                    />
+                                    {item.name}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        )}
                       </ul>
                     </nav>
                   </div>
@@ -135,7 +188,7 @@ export default function Layout({ children }: LayoutProps) {
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item) => (
+                    {filteredNavigation.map((item) => (
                       <li key={item.name}>
                         <Link
                           to={item.href}
@@ -161,6 +214,37 @@ export default function Layout({ children }: LayoutProps) {
                     ))}
                   </ul>
                 </li>
+                {isAdmin && (
+                  <li>
+                    <div className="text-xs font-semibold leading-6 text-gray-400">Admin</div>
+                    <ul role="list" className="-mx-2 mt-2 space-y-1">
+                      {adminNavigation.map((item) => (
+                        <li key={item.name}>
+                          <Link
+                            to={item.href}
+                            className={classNames(
+                              location.pathname === item.href
+                                ? 'bg-gray-50 text-blue-600'
+                                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50',
+                              'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                            )}
+                          >
+                            <item.icon
+                              className={classNames(
+                                location.pathname === item.href
+                                  ? 'text-blue-600'
+                                  : 'text-gray-400 group-hover:text-blue-600',
+                                'h-6 w-6 shrink-0'
+                              )}
+                              aria-hidden="true"
+                            />
+                            {item.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                )}
                 <li className="-mx-6 mt-auto">
                   <div className="flex items-center gap-x-4 px-6 py-3 text-sm font-semibold leading-6 text-gray-900">
                     <UserCircleIcon className="h-8 w-8 text-gray-400" />

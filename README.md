@@ -1,62 +1,352 @@
-# TW2GEM Monorepo
+# AI Call Center Platform
 
-This monorepo contains all the packages for the TW2GEM project, a system that integrates Twilio with Google's Gemini AI for real-time audio processing and AI interactions.
+A production-ready AI-powered call center platform built with React, TypeScript, Supabase, and Vercel. This platform enables businesses to deploy intelligent voice agents for inbound customer service and outbound sales campaigns.
 
-## Project Structure
+## 🚀 Features
 
-The monorepo is organized into the following packages:
+### Core Functionality
+- **Real-time AI Voice Agents**: Powered by Google's Gemini 2.0 Flash Live model
+- **Inbound Call Handling**: Automatic call answering and intelligent routing
+- **Outbound Campaigns**: Automated sales and marketing call campaigns
+- **Multi-tenant Architecture**: Support for multiple organizations and users
+- **Real-time Analytics**: Live call monitoring and performance metrics
 
-- `audio-converter`: Handles audio format conversion and processing
-- `twilio-server`: Manages Twilio integration and audio streaming
-- `tw2gem-server`: Core server that coordinates between Twilio and Gemini
-- `gemini-live-client`: Client for interacting with Google's Gemini AI
-- `examples`: Example implementations and usage scenarios
+### Advanced Features
+- **Live Call Transcription**: Real-time speech-to-text conversion
+- **Sentiment Analysis**: Automatic mood detection during calls
+- **Call Recording**: Secure audio storage and playback
+- **Campaign Management**: Lead upload, scheduling, and progress tracking
+- **Usage Tracking**: Minute-based billing and plan management
+- **API Integration**: Twilio for telephony, Supabase for data
 
-## Getting Started
+### User Experience
+- **Modern Dashboard**: Clean, responsive interface built with Tailwind CSS
+- **Real-time Updates**: Live data synchronization across all users
+- **Permission System**: Role-based access control and feature gating
+- **Demo Mode**: Try the platform without API keys
+- **Mobile Responsive**: Works seamlessly on all devices
 
-### Prerequisites
+## 🛠 Tech Stack
 
-- Node.js (v18 or higher)
-- npm (v9 or higher)
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **Headless UI** for accessible components
+- **React Router** for navigation
+- **React Hot Toast** for notifications
 
-### Installation
+### Backend & Database
+- **Supabase** for authentication, database, and real-time features
+- **PostgreSQL** with Row Level Security (RLS)
+- **Real-time subscriptions** for live updates
+
+### External APIs
+- **Google Gemini 2.0 Flash Live** for AI conversations
+- **Twilio** for phone system integration
+- **Vercel** for deployment and hosting
+
+## 📋 Prerequisites
+
+Before setting up the platform, ensure you have:
+
+1. **Node.js 18+** installed
+2. **npm** or **yarn** package manager
+3. **Supabase account** (free tier available)
+4. **Vercel account** (free tier available)
+5. **Google AI Studio account** for Gemini API
+6. **Twilio account** for phone services (optional for demo)
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
 
 ```bash
-# Install dependencies for all packages
+git clone <repository-url>
+cd Ai-calling-V2
+```
+
+### 2. Install Dependencies
+
+```bash
+cd dashboard
 npm install
-
-# Build all packages
-npm run build
 ```
 
-### Development
+### 3. Set Up Supabase
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to Settings > API to get your project URL and anon key
+3. Run the database setup script:
+
+```sql
+-- Copy and paste the contents of supabase/schema.sql into your Supabase SQL editor
+-- This will create all necessary tables, functions, and triggers
+```
+
+### 4. Configure Environment Variables
+
+Create a `.env.local` file in the `dashboard` directory:
+
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# App Configuration
+VITE_APP_NAME="AI Call Center"
+VITE_APP_URL=http://localhost:12000
+
+# API Keys
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_TWILIO_ACCOUNT_SID=your_twilio_account_sid
+VITE_TWILIO_AUTH_TOKEN=your_twilio_auth_token
+VITE_TWILIO_PHONE_NUMBER=your_twilio_phone_number
+```
+
+### 5. Start the Application (Single Command)
 
 ```bash
-# Run linting
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
-
-# Format code
-npm run format
-
-# Clean build artifacts
-npm run clean
+npm start
 ```
 
-## Available Scripts
+This will:
+- Install all dependencies
+- Start the TW2GEM server on port 12001
+- Start the dashboard on port 12000
 
-- `npm run lint`: Run ESLint on all packages
-- `npm run lint:fix`: Fix ESLint issues automatically
-- `npm run format`: Format code using Prettier
-- `npm run clean`: Remove build artifacts
-- `npm run build`: Build all packages
+The application will be available at:
+- **Dashboard**: `http://localhost:12000`
+- **TW2GEM Server**: `ws://localhost:12001`
 
-## Contributing
+Or start services individually:
+```bash
+npm run start-services  # Start both services
+npm run dashboard       # Start only dashboard
+npm run tw2gem-server   # Start only server
+```
 
-Please read the individual package READMEs for specific contribution guidelines.
+### 6. Demo Login
 
-## License
+Use these credentials to explore the platform:
+- **Email**: `demo@example.com`
+- **Password**: `demo123`
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+## 🔧 Production Deployment
+
+### Deploy to Vercel
+
+1. **Connect Repository**:
+   ```bash
+   npm install -g vercel
+   vercel login
+   vercel --prod
+   ```
+
+2. **Set Environment Variables** in Vercel dashboard:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+3. **Configure Domain** (optional):
+   - Add custom domain in Vercel settings
+   - Update CORS settings in Supabase
+
+### Supabase Production Setup
+
+1. **Enable Row Level Security** on all tables
+2. **Set up Authentication** providers (email, Google, etc.)
+3. **Configure Storage** for call recordings
+4. **Set up Edge Functions** for webhooks (optional)
+
+## 🔑 API Keys Setup
+
+### Required for Full Functionality
+
+1. **Google Gemini API**:
+   - Visit [Google AI Studio](https://aistudio.google.com)
+   - Create API key
+   - Add to Settings page in the platform
+
+2. **Twilio** (for phone calls):
+   - Sign up at [twilio.com](https://twilio.com)
+   - Get Account SID and Auth Token
+   - Purchase a phone number
+   - Add credentials to Settings page
+
+### Optional Integrations
+
+- **OpenAI** (alternative to Gemini)
+- **Azure Speech Services** (enhanced voice options)
+- **Stripe** (for billing integration)
+
+## 📊 Database Schema
+
+The platform uses a comprehensive PostgreSQL schema with:
+
+### Core Tables
+- `profiles` - User account information
+- `call_logs` - Call history and metadata
+- `outbound_campaigns` - Campaign management
+- `campaign_leads` - Lead tracking
+- `analytics_data` - Performance metrics
+
+### Security Features
+- Row Level Security (RLS) on all tables
+- User-based data isolation
+- Encrypted API key storage
+- Audit logging
+
+## 🔒 Security Features
+
+### Authentication
+- Supabase Auth with email/password
+- Social login support (Google, GitHub)
+- JWT-based session management
+- Automatic session refresh
+
+### Data Protection
+- Row Level Security (RLS)
+- API key encryption
+- CORS protection
+- Rate limiting
+
+### Privacy Compliance
+- GDPR-ready data handling
+- Call recording consent
+- Data retention policies
+- User data export/deletion
+
+## 📈 Monitoring & Analytics
+
+### Built-in Analytics
+- Real-time call metrics
+- Campaign performance tracking
+- Usage monitoring
+- Success rate analysis
+
+### External Monitoring
+- Vercel Analytics integration
+- Supabase monitoring dashboard
+- Custom webhook events
+- Error tracking with Sentry (optional)
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+npm run test
+```
+
+### Test Coverage
+```bash
+npm run test:coverage
+```
+
+### E2E Testing
+```bash
+npm run test:e2e
+```
+
+## 🔧 Development
+
+### Project Structure
+```
+dashboard/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/         # Page components
+│   ├── services/      # API and business logic
+│   ├── hooks/         # Custom React hooks
+│   ├── contexts/      # React context providers
+│   ├── lib/           # Utility functions
+│   └── types/         # TypeScript definitions
+├── public/            # Static assets
+└── supabase/          # Database schema and functions
+```
+
+### Key Services
+- `AuthService` - Authentication management
+- `DatabaseService` - Database operations
+- `RealtimeService` - Live data subscriptions
+- `CallService` - Call handling logic
+
+### Custom Hooks
+- `useAuth` - Authentication state
+- `useUser` - User profile management
+- `usePermissions` - Feature access control
+- `useRealtime` - Live data updates
+
+## 🚀 Scaling Considerations
+
+### Performance Optimization
+- React.memo for component optimization
+- Lazy loading for code splitting
+- Database indexing for fast queries
+- CDN for static assets
+
+### Infrastructure Scaling
+- Supabase auto-scaling
+- Vercel edge functions
+- Database connection pooling
+- Redis for caching (optional)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+### Development Guidelines
+- Follow TypeScript best practices
+- Use ESLint and Prettier for code formatting
+- Write comprehensive tests
+- Update documentation for new features
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+### Documentation
+- [Supabase Docs](https://supabase.com/docs)
+- [Vercel Docs](https://vercel.com/docs)
+- [Twilio Docs](https://www.twilio.com/docs)
+- [Gemini API Docs](https://ai.google.dev/docs)
+
+### Community
+- GitHub Issues for bug reports
+- GitHub Discussions for questions
+- Discord community (link in repository)
+
+### Professional Support
+- Enterprise support available
+- Custom development services
+- Training and consultation
+
+## 🎯 Roadmap
+
+### Upcoming Features
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
+- [ ] CRM integrations
+- [ ] Mobile app
+- [ ] Voice cloning capabilities
+- [ ] Advanced routing rules
+- [ ] Webhook marketplace
+- [ ] API rate limiting dashboard
+
+### Long-term Goals
+- [ ] AI model fine-tuning
+- [ ] Video call support
+- [ ] Advanced sentiment analysis
+- [ ] Predictive analytics
+- [ ] Multi-channel support (SMS, chat)
+
+---
+
+**Ready to revolutionize your call center with AI?** 🚀
+
+Get started today and transform your customer communications with intelligent voice agents that work 24/7. 

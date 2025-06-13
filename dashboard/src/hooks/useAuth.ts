@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
-import { mockAuth } from '../lib/mockAuth'
+import { AuthService } from '../services/auth'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -9,42 +8,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for demo session in localStorage first
-    const checkDemoAuth = () => {
-      const demoSession = localStorage.getItem('demo_session')
-      if (demoSession) {
-        try {
-          const session = JSON.parse(demoSession)
-          if (session.expires_at > Date.now()) {
-            setSession(session)
-            setUser(session.user)
-            setLoading(false)
-            return true
-          } else {
-            // Session expired, clean up
-            localStorage.removeItem('demo_session')
-            localStorage.removeItem('demo_user')
-          }
-        } catch (error) {
-          console.error('Error parsing demo session:', error)
-        }
-      }
-      return false
-    }
-
-    // Check demo auth first
-    if (checkDemoAuth()) {
-      return
-    }
-
-    // Get initial session - try Supabase
+    // Get initial session
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { session } = await AuthService.getSession()
         setSession(session)
         setUser(session?.user ?? null)
       } catch (error) {
-        console.log('Supabase not available, using demo mode')
+        console.error('Error getting initial session:', error)
         setSession(null)
         setUser(null)
       }
@@ -53,32 +24,30 @@ export function useAuth() {
 
     initAuth()
 
-    // Listen for auth changes (Supabase only)
-    try {
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      })
+    // Listen for auth state changes
+    const unsubscribe = AuthService.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session)
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
 
-      return () => subscription.unsubscribe()
-    } catch (error) {
-      // If Supabase is not available, just return empty cleanup
-      return () => {}
-    }
+    return unsubscribe
   }, [])
 
   const signOut = async () => {
+    setLoading(true)
     try {
-      await supabase.auth.signOut()
+      await AuthService.signOut()
+      setUser(null)
+      setSession(null)
     } catch (error) {
-      // Fallback to mock auth
-      await mockAuth.signOut()
+      console.error('Error signing out:', error)
+    } finally {
+      setLoading(false)
+      // Force reload to clear state
+      window.location.reload()
     }
-    // Force reload to clear state
-    window.location.reload()
   }
 
   return {

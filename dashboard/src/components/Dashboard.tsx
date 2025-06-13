@@ -10,8 +10,12 @@ import {
   UserGroupIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  MegaphoneIcon
 } from '@heroicons/react/24/outline'
+import { usePermissions } from '../contexts/UserContext'
+import UsageTracker from './UsageTracker'
+import OutboundCampaigns from './OutboundCampaigns'
 
 interface DashboardProps {
   onLogout: () => void
@@ -20,6 +24,7 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const [activeTab, setActiveTab] = useState('overview')
   const [serverStatus, setServerStatus] = useState<'running' | 'stopped'>('stopped')
+  const { canUseInbound, canUseOutboundDialer } = usePermissions()
 
   const stats = [
     { name: 'Active Calls', value: '12', icon: PhoneIcon, color: 'text-green-500' },
@@ -78,11 +83,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="border-b border-slate-200 mb-8">
           <nav className="-mb-px flex space-x-8">
             {[
-              { id: 'overview', name: 'Overview', icon: ChartBarIcon },
-              { id: 'calls', name: 'Live Calls', icon: PhoneIcon },
-              { id: 'recordings', name: 'Recordings', icon: MicrophoneIcon },
-              { id: 'settings', name: 'Settings', icon: Cog6ToothIcon },
-            ].map((tab) => (
+              { id: 'overview', name: 'Overview', icon: ChartBarIcon, show: true },
+              { id: 'calls', name: 'Live Calls', icon: PhoneIcon, show: canUseInbound },
+              { id: 'outbound', name: 'Outbound Campaigns', icon: MegaphoneIcon, show: canUseOutboundDialer },
+              { id: 'recordings', name: 'Recordings', icon: MicrophoneIcon, show: true },
+              { id: 'settings', name: 'Settings', icon: Cog6ToothIcon, show: true },
+            ].filter(tab => tab.show).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -148,6 +154,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               ))}
             </div>
+
+            {/* Usage Tracker */}
+            <UsageTracker />
 
             {/* Recent Calls */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">
@@ -242,6 +251,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         )}
 
+        {/* Outbound Campaigns Tab */}
+        {activeTab === 'outbound' && <OutboundCampaigns />}
+
         {/* Recordings Tab */}
         {activeTab === 'recordings' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -329,7 +341,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </label>
                   <input 
                     type="number" 
-                    defaultValue="6593"
+                    defaultValue="12001"
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>

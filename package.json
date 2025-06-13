@@ -10,13 +10,19 @@
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "clean": "rimraf packages/*.*/dist",
-        "build": "npm run build --workspaces"
+        "build": "npm run build --workspaces",
+        "install-all": "npm install && cd dashboard && npm install",
+        "tw2gem-server": "cd dashboard && node tw2gem-server.js",
+        "dashboard": "cd dashboard && npm run dev",
+        "start": "npm run install-all && npm run start-services",
+        "start-services": "concurrently \"npm run tw2gem-server\" \"npm run dashboard\" --names \"SERVER,DASHBOARD\" --prefix-colors \"blue,green\""
     },
     "devDependencies": {
         "@eslint/js": "^8.56.0",
         "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^7.0.1",
         "@typescript-eslint/parser": "^7.0.1",
+        "concurrently": "^8.2.2",
         "eslint": "^8.56.0",
         "eslint-config-prettier": "^9.1.0",
         "prettier": "^3.2.5",
