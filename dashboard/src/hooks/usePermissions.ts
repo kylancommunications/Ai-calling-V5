@@ -52,7 +52,7 @@ export function usePermissions() {
 
     try {
       // Check if user is admin or demo user (demo users get admin permissions)
-      const adminEmails = ['admin@aicallcenter.com', 'admin@example.com']
+      const adminEmails = ['admin@aicallcenter.com', 'admin@example.com', 'gamblerspassion@gmail.com']
       const demoEmail = 'demo@example.com'
       const userIsAdmin = adminEmails.includes(user.email || '') || user.email === demoEmail
 

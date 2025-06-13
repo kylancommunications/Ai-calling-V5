@@ -19,8 +19,7 @@ import type {
 export class DatabaseService {
   // Check if we're in demo mode
   private static isDemoMode(): boolean {
-    return !import.meta.env.VITE_SUPABASE_URL || 
-           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co'
+    return import.meta.env.VITE_ENABLE_DEMO_MODE === 'true'
   }
 
   // Profile operations
